@@ -27,7 +27,7 @@ for (row = 0; row < inpam.height; ++row) {
         unsigned int plane;
         for (plane = 0; plane < inpam.depth; ++plane) {
             grand_total += tuplerow[column][plane];
-            printf("%d-",tuplerow[column][plane] );
+            printf("%ld-",tuplerow[column][plane] );
 
         }
     }
