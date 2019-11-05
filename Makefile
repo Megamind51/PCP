@@ -8,7 +8,7 @@ NETPBM_LIB=-L/usr/lib -lnetpbm
 
 SOURCE= $(SOURCE_DIR)/*.c
 
-CFLAGS=-std=c11
+CFLAGS= -fopenmp -O3 -std=c99  -lm
 
 MKDIR= mkdir -p
 
