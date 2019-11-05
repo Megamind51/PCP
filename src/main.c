@@ -2,7 +2,7 @@
    from stdin, add up the values of every sample in it
    (I don't know why), and write the image unchanged to
    stdout. */
-
+#include <string.h>
 #include <pam.h>
 
 int min_vizinhos(unsigned int **matrix, int cols, int rows, int col, int row){
@@ -175,28 +175,49 @@ int main(int argc, char const *argv[]) {
       unsigned int row;
       unsigned int col;
       unsigned int rows, cols, maxval;
-      unsigned int **matrix;
+      // array input
+      gray **matrix;
       pm_init(argv[0], 0);
       matrix = pgm_readpgm(stdin, &cols,&rows,&maxval);
-    //  printf("max_value %d\n",maxval );
+      gray **output = pgm_allocarray(cols, rows);
+        for(row = 0; row < rows; row++)
+          for (col = 0; col < cols; col++)
+            output[row][col] = matrix[row][col];
+
         for(row = 0; row < rows; row++){
           for (col = 0; col < cols; col++) {
             // 255 -> Branco
             if (matrix[row][col] == 255){
               if(vizinhos_branco(matrix,cols,rows,col,row) ){
-                 matrix[row][col] = min_vizinhos(matrix, cols, rows, col,row);
+                 output[row][col] = min_vizinhos(matrix, cols, rows, col,row);
                }
-              //matrix[row][col] = (matrix[row][col] == 0) ? 255 : 0;
-            }
           }
+        }
+        }
+        for (int flag = 1; flag;){
+          flag = 0;
+        for(row = 0; row < rows; row++){
+          for (col = 0; col < cols; col++) {
+            // 255 -> Branco
+            if (matrix[row][col] == 255){
+              if(vizinhos_branco(matrix,cols,rows,col,row) ){
+                flag = 1;
+                 output[row][col] = min_vizinhos(matrix, cols, rows, col,row);
+               }
+          }
+          }
+        }
+          for(row = 0; row < rows; row++)
+            for (col = 0; col < cols; col++)
+              matrix[row][col] = output[row][col];
+
         }
         FILE *fptr;
         if ((fptr = fopen("testeoutput.pgm","w+")) == NULL){
           printf("Erro ao abrir ficheiro");
-          // Program exits if the file pointer returns NULL.
           exit(1);
         }
-      pgm_writepgm(fptr, matrix, cols, rows, maxval, 1);
+      pgm_writepgm(fptr, output, cols, rows, maxval, 1);
 
 
 }
