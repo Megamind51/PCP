@@ -5,212 +5,52 @@
 #include <string.h>
 #include <pam.h>
 
-int min_vizinhos(unsigned int **matrix, int cols, int rows, int col, int row){
-  int min = 254;
-  if (row < rows-1 && col < cols-1 && col > 0 && row > 0){
-    if (matrix[row+1][col] < min)
-      min = matrix[row+1][col];
-    if (matrix[row+1][col+1] < min)
-      min = matrix[row+1][col+1];
-    if (matrix[row][col+1] < min)
-      min = matrix[row][col+1];
-    if (matrix[row-1][col] < min)
-      min = matrix[row-1][col];
-    if (matrix[row-1][col+1] < min)
-      min = matrix[row-1][col+1];
-    if (matrix[row+1][col-1] < min)
-      min = matrix[row+1][col-1];
-    if (matrix[row-1][col-1] < min)
-      min = matrix[row-1][col-1];
-    if (matrix[row][col-1] < min)
-      min = matrix[row][col-1];
-    }else if (row == 0 && col == 0){
-      if (matrix[row][col+1] < min)
-        min = matrix[row][col+1];
-      if (matrix[row+1][col+1] < min)
-        min = matrix[row+1][col+1];
-      if (matrix[row+1][col] < min)
-        min = matrix[row+1][col];
-    }else if (row == rows-1 && col == cols-1){
-      if (matrix[row][col-1] < min)
-        min = matrix[row][col-1];
-      if (matrix[row-1][col-1] < min)
-        min = matrix[row-1][col-1];
-      if (matrix[row-1][col] < min)
-        min = matrix[row-1][col];
-    }else if (row == rows-1 && col == 0){
-      if (matrix[row][col+1] < min)
-        min = matrix[row][col+1];
-      if (matrix[row-1][col+1] < min)
-        min = matrix[row-1][col+1];
-      if (matrix[row-1][col] < min)
-        min = matrix[row-1][col];
-    }else if (row == 0 && col == cols-1){
-      if (matrix[row][col-1] < min)
-        min = matrix[row][col-1];
-      if (matrix[row+1][col-1] < min)
-        min = matrix[row+1][col-1];
-      if (matrix[row+1][col] < min)
-        min = matrix[row+1][col];
-    }else if (row == 0){
-      if (matrix[row][col-1] < min)
-        min = matrix[row][col-1];
-      if (matrix[row][col+1] < min)
-        min = matrix[row][col+1];
-      if (matrix[row+1][col] < min)
-        min = matrix[row+1][col];
-      if (matrix[row+1][col+1] < min)
-        min = matrix[row+1][col+1];
-      if (matrix[row+1][col-1] < min)
-        min = matrix[row+1][col-1];
-    }else if (col == 0){
-      if (matrix[row+1][col] < min)
-        min = matrix[row+1][col];
-      if (matrix[row-1][col] < min)
-        min = matrix[row-1][col];
-      if (matrix[row][col+1] < min)
-        min = matrix[row][col+1];
-      if (matrix[row+1][col+1] < min)
-        min = matrix[row+1][col+1];
-      if (matrix[row-1][col+1] < min)
-        min = matrix[row-1][col+1];
-    }else if (col == cols-1){
-      if (matrix[row+1][col] < min)
-        min = matrix[row+1][col];
-      if (matrix[row-1][col] < min)
-        min = matrix[row-1][col];
-      if (matrix[row][col-1] < min)
-        min = matrix[row][col-1];
-      if (matrix[row+1][col-1] < min)
-        min = matrix[row+1][col-1];
-      if (matrix[row-1][col-1] < min)
-        min = matrix[row-1][col-1];
+int min_vizinhos( gray **matrix, int rows, int cols, int row, int col, int* flag){
+    int i, j, min = matrix[row][col] -1;
+  //  printf("%d %d\n",row,col );
+    for(i = -1; i < 2; i++)
+        for(j = -1; j < 2; j++)
+            if(row + i > 0 && row + i < rows)
+                if(col + j > 0 && col + j < cols)
+                    if(matrix[row + i][col + j] < min){
+                      if(!(*flag)){
+                        *flag = 1;
+                      }
+                      min = matrix[row + i][col + j];
+                    }
 
-    }else{
-      if (matrix[row][col-1] < min)
-        min = matrix[row][col-1];
-      if (matrix[row][col+1] < min)
-        min = matrix[row][col+1];
-      if (matrix[row-1][col] < min)
-        min = matrix[row-1][col];
-      if (matrix[row-1][col+1] < min)
-        min = matrix[row-1][col+1];
-      if (matrix[row-1][col-1] < min)
-        min = matrix[row-1][col-1];
-    }
-    return min +1;
+    return min + 1;
 }
 
-
-int vizinhos_branco(unsigned int **matrix, int cols, int rows, int col, int row){
-    if (row < rows-1 && col < cols-1 && col > 0 && row > 0){
-      if(matrix[row+1][col] != 255 ||
-         matrix[row-1][col] != 255 ||
-         matrix[row+1][col+1] != 255 ||
-         matrix[row-1][col+1] != 255 ||
-         matrix[row+1][col-1] != 255 ||
-         matrix[row-1][col-1] != 255 ||
-         matrix[row][col+1] != 255 ||
-         matrix[row][col-1] != 255 )
-          return 1;
-    }else if(row == 0 && col == 0){
-      if(matrix[row][col+1] != 255 ||
-         matrix[row+1][col+1] != 255 ||
-         matrix[row+1][col] != 255)
-          return 1;
-    }else if(row == rows-1 && col == cols-1){
-      if(matrix[row][col-1] != 255 ||
-         matrix[row-1][col-1] != 255 ||
-         matrix[row-1][col] != 255)
-          return 1;
-
-    }else if(row == rows-1 && col == 0){
-      if(matrix[row][col+1] != 255 ||
-         matrix[row-1][col+1] != 255 ||
-         matrix[row-1][col] != 255)
-          return 1;
-
-    }else if(row == 0 && col == cols-1){
-      if(matrix[row][col-1] != 255 ||
-         matrix[row+1][col-1] != 255 ||
-         matrix[row+1][col] != 255)
-          return 1;
-
-    }else if(row == 0){
-      if(matrix[row][col-1] != 255 ||
-         matrix[row][col+1] != 255 ||
-         matrix[row+1][col] != 255 ||
-         matrix[row+1][col+1] != 255 ||
-         matrix[row+1][col-1] != 255)
-      return 1;
-
-    }else if(col == 0){
-      if(matrix[row+1][col] != 255 ||
-         matrix[row-1][col] != 255 ||
-         matrix[row][col+1] != 255 ||
-         matrix[row+1][col+1] != 255 ||
-         matrix[row-1][col+1] != 255)
-      return 1;
-
-    }else if(col == cols-1){
-      if(matrix[row+1][col] != 255 ||
-         matrix[row-1][col] != 255 ||
-         matrix[row][col-1] != 255 ||
-         matrix[row+1][col-1] != 255 ||
-         matrix[row-1][col-1] != 255)
-      return 1;
-
-    }else {
-      if(matrix[row][col-1] != 255 ||
-         matrix[row][col+1] != 255 ||
-         matrix[row-1][col] != 255 ||
-         matrix[row-1][col-1] != 255 ||
-         matrix[row-1][col+1] != 255)
-      return 1;
-    }
-    return 0;
-}
 
 int main(int argc, char const *argv[]) {
       unsigned int row;
       unsigned int col;
       unsigned int rows, cols, maxval;
+      unsigned int min;
       // array input
       gray **matrix;
       pm_init(argv[0], 0);
+      int flag = 1;
       matrix = pgm_readpgm(stdin, &cols,&rows,&maxval);
       gray **output = pgm_allocarray(cols, rows);
-        for(row = 0; row < rows; row++)
-          for (col = 0; col < cols; col++)
-            output[row][col] = matrix[row][col];
 
         for(row = 0; row < rows; row++){
           for (col = 0; col < cols; col++) {
-            // 255 -> Branco
-            if (matrix[row][col] == 255){
-              if(vizinhos_branco(matrix,cols,rows,col,row) ){
-                 output[row][col] = min_vizinhos(matrix, cols, rows, col,row);
-               }
+            output[row][col] = min_vizinhos(matrix, rows, cols, row,col, &flag);
           }
         }
-        }
-        for (int flag = 1; flag;){
+
+        for (flag = 1; flag;){
           flag = 0;
         for(row = 0; row < rows; row++){
           for (col = 0; col < cols; col++) {
-            // 255 -> Branco
-            if (matrix[row][col] == 255){
-              if(vizinhos_branco(matrix,cols,rows,col,row) ){
-                flag = 1;
-                 output[row][col] = min_vizinhos(matrix, cols, rows, col,row);
-               }
-          }
+                 output[row][col] = min_vizinhos(matrix, rows, cols, row,col,&flag);
           }
         }
           for(row = 0; row < rows; row++)
             for (col = 0; col < cols; col++)
               matrix[row][col] = output[row][col];
-
         }
         FILE *fptr;
         if ((fptr = fopen("testeoutput.pgm","w+")) == NULL){
