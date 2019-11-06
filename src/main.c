@@ -14,39 +14,34 @@ void clearCache (void) {
 		clearcache[i] = i;
 }
 
-int min_vizinhos( gray **matrix, int rows, int cols, int row, int col, int* flag){
+int min_vizinhos( gray **matrix, int rows, int cols, int row, int col){
     int i, j, min = matrix[row][col] -1;
-  //  printf("%d %d\n",row,col );
     for(i = -1; i < 2; i++)
         for(j = -1; j < 2; j++)
             if(row + i > 0 && row + i < rows)
                 if(col + j > 0 && col + j < cols)
                     if(matrix[row + i][col + j] < min){
-                        if(!(*flag) )
-                            *flag = 1;
                         min = matrix[row + i][col + j];
                     }
-
     return min + 1;
 }
 
 gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
-  int flag = 0;
-  int iterator = 1;
+  int flag = 1;
+  int iterator = 1, aux;
   unsigned int col,row;
-  for(row = 0; row < rows; row++){
-      for (col = 0; col < cols; col++) {
-          output[row][col] = min_vizinhos(matrix, rows, cols, row,col, &flag);
-      }
-  }
   while (flag){
       flag = 0;
       for(row = 0; row < rows; row++){
           for (col = 0; col < cols; col++) {
-            if(iterator)
-              output[row][col] = min_vizinhos(matrix, rows, cols, row,col,&flag);
-            else
-              matrix[row][col] = min_vizinhos(output, rows, cols, row,col,&flag);
+            if(iterator){
+							aux = output[row][col];
+              aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row,col);
+            }else{
+							aux = matrix[row][col];
+              matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
+						}
+						if(aux != 0) flag = 1;
 
           }
       }
@@ -60,28 +55,29 @@ gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
 
 
 gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
-  int flag = 0;
+  int flag = 1, aux;
   int iterator = 1;
-  unsigned int col,row;
-  #pragma omp parallel for collapse(2)
-  for(row = 0; row < rows; row++){
-      for (col = 0; col < cols; col++) {
-          output[row][col] = min_vizinhos(matrix, rows, cols, row,col, &flag);
-      }
-  }
-  while (flag){
+//  unsigned int col,row;
+
+	while (flag){
       flag = 0;
-      #pragma omp parallel for  collapse(2)
-      for(row = 0; row < rows; row++){
-          for (col = 0; col < cols; col++) {
-            if(iterator)
-              output[row][col] = min_vizinhos(matrix, rows, cols, row,col,&flag);
-            else
-              matrix[row][col] = min_vizinhos(output, rows, cols, row,col,&flag);
+      #pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(guided)
+      for(int row = 0; row < rows; row++){
+          for (int col = 0; col < cols; col++) {
+            if(iterator){
+							aux = output[row][col];
+							aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row,col);
+						}
+            else{
+							aux = matrix[row][col];
+							matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
+						}
+							if(aux != 0) flag = 1;
           }
       }
       iterator = !iterator;
   }
+
   if(iterator)
       return matrix;
   else
@@ -107,10 +103,16 @@ int main(int argc, char const *argv[]) {
     double end;
     FILE *fptr;
 
-    start = omp_get_wtime();
-    sequencial = run_sequencial(matrix, output, rows, cols);
-    end = omp_get_wtime();
-    printf("sequencial %f ms to execute \n", (end - start)*1000);
+		for(int x = 0; x < 10; x++){
+			clearCache();
+	    start = omp_get_wtime();
+	    sequencial = run_sequencial(matrix, output, rows, cols);
+	    end = omp_get_wtime();
+	    printf("sequencial %f ms to execute \n", (end - start)*1000);
+			for(int i = 0; i < rows; i++)
+	      for(int j = 0; j < cols; j++)
+	        matrix[i][j] = matrix_inicial[i][j];
+		}
 
     if ((fptr = fopen("sequencial.pgm","w+")) == NULL){
       printf("Erro ao abrir ficheiro");
@@ -121,10 +123,17 @@ int main(int argc, char const *argv[]) {
     // garantir que nao ha nada em cache
     clearCache();
 
-    start = omp_get_wtime();
-    paralel = run_parallel(matrix_inicial, output, rows, cols);
-    end = omp_get_wtime();
-    printf("paralela %f ms to execute \n", (end - start)*1000);
+		for(int x = 0; x < 10; x++){
+			clearCache();
+    	start = omp_get_wtime();
+    	paralel = run_parallel(matrix, output, rows, cols);
+    	end = omp_get_wtime();
+    	printf("paralela %f ms to execute \n", (end - start)*1000);
+			for(int i = 0; i < rows; i++)
+	      for(int j = 0; j < cols; j++)
+	        matrix[i][j] = matrix_inicial[i][j];
+
+		}
 
     if ((fptr = fopen("paralela.pgm","w+")) == NULL){
       printf("Erro ao abrir ficheiro");
