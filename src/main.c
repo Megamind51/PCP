@@ -5,7 +5,7 @@
 
 // Variáveis e defines relacionados com a PAPI
 #define NUM_EVENTS 2
-int	Events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_TOT_CYC};
+int	Events[NUM_EVENTS] = {PAPI_L3_TCA, PAPI_L3_TCM};
 int EventSet = PAPI_NULL, retval;
 long long int values[NUM_EVENTS];
 
@@ -43,7 +43,7 @@ gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
 				}
 				else {
 					aux = matrix[row][col];
-			  		matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
+			  		aux -= matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
 				}
 
 				if(aux != 0)
@@ -66,7 +66,6 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 
 	while (flag){
     	flag = 0;
-
 		#pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(guided)
       	for(int row = 0; row < rows; row++){
         	for (int col = 0; col < cols; col++) {
@@ -96,21 +95,25 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 
 int main(int argc, char const *argv[]) {
     unsigned int rows, cols, maxval, row, col, min;
-    gray ** matrix;
+    gray ** inicial;
+
+	//apontadores para os resultados finais
     gray ** sequencial;
     gray ** paralel;
 
 	//Leitura da imagem especificada por argumento
     pm_init(argv[0], 0);
-    matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
+    inicial = pgm_readpgm(stdin, &cols, &rows, &maxval);
 
     //Guardar matriz com os valores originais dos píxeis da imagem
-    gray ** inicial = pgm_allocarray(cols, rows);
-	gray ** output  = pgm_allocarray(cols, rows);
+    gray ** matrix_seq = pgm_allocarray(cols, rows);
+	gray ** matrix_par  = pgm_allocarray(cols, rows);
+	gray ** output_seq  = pgm_allocarray(cols, rows);
+	gray ** output_par  = pgm_allocarray(cols, rows);
 
     for(int i = 0; i < rows; i++)
      	for(int j = 0; j < cols; j++)
-        	inicial[i][j] = matrix[i][j];
+        	matrix_par[i][j] = matrix_seq[i][j] = inicial[i][j];
 
 	//Variáveis para medição temporal e apontador para os ficheiros de output
     double start;
@@ -123,25 +126,31 @@ int main(int argc, char const *argv[]) {
 	retval = PAPI_create_eventset(&EventSet);
 	retval = PAPI_add_events(EventSet, Events, NUM_EVENTS);
 
-	for(int x = 0; x < 10; x++){
+
+	int n_iterations = 2;
+	for(int y = 0; y < n_iterations; y++){
 		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
 		clearCache();
 		start = omp_get_wtime();
 		retval = PAPI_start(EventSet);
 
 		// workload sequencial
-		sequencial = run_sequencial(matrix, output, rows, cols);
+		sequencial = run_sequencial(matrix_seq, output_seq, rows, cols);
 
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
 		retval = PAPI_stop(EventSet, values);
 		printf("\nTempo de execução sequencial: %f ms\n", (end - start)*1000);
-		printf("CPI: %f\n", values[1] / (double) values[0]);
+		printf("L3MR: %f\n", values[1] / (double) values[0]);
 
 		//Repor os valores originais da matriz
-		for(int i = 0; i < rows; i++)
-      		for(int j = 0; j < cols; j++)
-	        	matrix[i][j] = inicial[i][j];
+		if (y < n_iterations - 1)
+			for(int i = 0; i < rows; i++)
+	      		for(int j = 0; j < cols; j++) {
+		        	matrix_seq[i][j] = inicial[i][j];
+					//output_seq[i][j] = rand()% 256;
+				}
+
 	}
 
 	//Abrir apontador para o ficheiro de output
@@ -153,25 +162,28 @@ int main(int argc, char const *argv[]) {
     fclose(fptr);
 
 
-	for(int x = 0; x < 10; x++){
+	for(int x = 0; x < n_iterations; x++){
 		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
 		clearCache();
 		start = omp_get_wtime();
 		retval = PAPI_start(EventSet);
 
 		// workload paralela
-		paralel = run_parallel(matrix, output, rows, cols);
+		paralel = run_parallel(matrix_par, output_par, rows, cols);
 
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
 		retval = PAPI_stop(EventSet, values);
 		printf("\nTempo de execução paralela %f ms\n", (end - start)*1000);
-		printf("CPI: %f\n", values[1] / (double) values[0]);
+		printf("L3MR: %f\n", values[1] / (double) values[0]);
 
 		//Repor os valores iniciais da matriz
-		for(int i = 0; i < rows; i++)
-	    	for(int j = 0; j < cols; j++)
-	        	matrix[i][j] = inicial[i][j];
+		if (x < n_iterations - 1)
+			for(int i = 0; i < rows; i++)
+		    	for(int j = 0; j < cols; j++) {
+		        	matrix_par[i][j] = inicial[i][j];
+					//output_par[i][j] = rand()% 256;
+				}
 
 	}
 
