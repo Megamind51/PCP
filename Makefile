@@ -1,10 +1,11 @@
 CC=gcc
 SOURCE_DIR=./src
 BIN_DIR=./bin
+LIB_DIR=./lib
 OUTPUT=$(BIN_DIR)/executavel.o
 
-NETPBM_INC=-I/usr/include
-NETPBM_LIB=-L/usr/lib -lnetpbm
+NETPBM_INC=-I./lib
+NETPBM_LIB=-L./lib -lnetpbm
 
 SOURCE= $(SOURCE_DIR)/*.c
 

@@ -66,16 +66,17 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 
 	while (flag){
     	flag = 0;
-		#pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(guided)
-      	for(int row = 0; row < rows; row++){
+		#pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(static, 1024)
+		for(int row = 0; row < rows; row++){
         	for (int col = 0; col < cols; col++) {
+
             	if(iterator){
 					aux = output[row][col];
-					aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row,col);
+					aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row, col);
 				}
             	else {
 					aux = matrix[row][col];
-					aux -= matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
+					aux -= matrix[row][col] = min_vizinhos(output, rows, cols, row, col);
 				}
 
 				if(aux != 0)
