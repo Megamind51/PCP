@@ -1,6 +1,13 @@
 #include <string.h>
 #include <pam.h>
 #include <omp.h>
+#include <papi.h>
+
+// Variáveis e defines relacionados com a PAPI
+#define NUM_EVENTS 2
+int	Events[NUM_EVENTS] = {PAPI_TOT_INS, PAPI_TOT_CYC};
+int EventSet = PAPI_NULL, retval;
+long long int values[NUM_EVENTS];
 
 double clearcache [30000000];
 
@@ -110,14 +117,26 @@ int main(int argc, char const *argv[]) {
     double end;
     FILE * fptr;
 
-	for(int x = 0; x < 10; x++){
-		clearCache();
-	    start = omp_get_wtime();
 
+	//Inicialização da PAPI
+	retval = PAPI_library_init(PAPI_VER_CURRENT);
+	retval = PAPI_create_eventset(&EventSet);
+	retval = PAPI_add_events(EventSet, Events, NUM_EVENTS);
+
+	for(int x = 0; x < 10; x++){
+		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
+		clearCache();
+		start = omp_get_wtime();
+		retval = PAPI_start(EventSet);
+
+		// workload sequencial
 		sequencial = run_sequencial(matrix, output, rows, cols);
 
+		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
-		printf("Tempo de execução sequencial: %f ms\n", (end - start)*1000);
+		retval = PAPI_stop(EventSet, values);
+		printf("\nTempo de execução sequencial: %f ms\n", (end - start)*1000);
+		printf("CPI: %f\n", values[1] / (double) values[0]);
 
 		//Repor os valores originais da matriz
 		for(int i = 0; i < rows; i++)
@@ -135,13 +154,19 @@ int main(int argc, char const *argv[]) {
 
 
 	for(int x = 0; x < 10; x++){
+		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
 		clearCache();
 		start = omp_get_wtime();
+		retval = PAPI_start(EventSet);
 
+		// workload paralela
 		paralel = run_parallel(matrix, output, rows, cols);
 
+		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
-		printf("Tempo de execução paralela %f ms\n", (end - start)*1000);
+		retval = PAPI_stop(EventSet, values);
+		printf("\nTempo de execução paralela %f ms\n", (end - start)*1000);
+		printf("CPI: %f\n", values[1] / (double) values[0]);
 
 		//Repor os valores iniciais da matriz
 		for(int i = 0; i < rows; i++)
