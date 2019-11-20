@@ -96,31 +96,9 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 
 int main(int argc, char const *argv[]) {
     unsigned int rows, cols, maxval, row, col, min;
-    gray ** inicial;
-
-	//apontadores para os resultados finais
-    gray ** sequencial;
-    gray ** paralel;
-
-	//Leitura da imagem especificada por argumento
-    pm_init(argv[0], 0);
-    inicial = pgm_readpgm(stdin, &cols, &rows, &maxval);
-
-    //Guardar matriz com os valores originais dos píxeis da imagem
-    gray ** matrix_seq = pgm_allocarray(cols, rows);
-	gray ** matrix_par  = pgm_allocarray(cols, rows);
-	gray ** output_seq  = pgm_allocarray(cols, rows);
-	gray ** output_par  = pgm_allocarray(cols, rows);
-
-    for(int i = 0; i < rows; i++)
-     	for(int j = 0; j < cols; j++)
-        	matrix_par[i][j] = matrix_seq[i][j] = inicial[i][j];
-
 	//Variáveis para medição temporal e apontador para os ficheiros de output
-    double start;
-    double end;
+    double start, end;
     FILE * fptr;
-
 
 	//Inicialização da PAPI
 	retval = PAPI_library_init(PAPI_VER_CURRENT);
@@ -128,15 +106,19 @@ int main(int argc, char const *argv[]) {
 	retval = PAPI_add_events(EventSet, Events, NUM_EVENTS);
 
 
-	int n_iterations = 2;
-	for(int y = 0; y < n_iterations; y++){
+	pm_init(argv[0], 0);
+    gray ** matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
+	gray ** output  = pgm_allocarray(cols, rows);
+	gray ** final;
+
+	if(atoi(argv[1]) == 0) {
 		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
 		clearCache();
 		start = omp_get_wtime();
 		retval = PAPI_start(EventSet);
 
 		// workload sequencial
-		sequencial = run_sequencial(matrix_seq, output_seq, rows, cols);
+		final = run_sequencial(matrix, output, rows, cols);
 
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
@@ -144,33 +126,20 @@ int main(int argc, char const *argv[]) {
 		printf("\nTempo de execução sequencial: %f ms\n", (end - start)*1000);
 		printf("L3MR: %f\n", values[1] / (double) values[0]);
 
-		//Repor os valores originais da matriz
-		if (y < n_iterations - 1)
-			for(int i = 0; i < rows; i++)
-	      		for(int j = 0; j < cols; j++) {
-		        	matrix_seq[i][j] = inicial[i][j];
-					//output_seq[i][j] = rand()% 256;
-				}
-
+		//Abrir apontador para o ficheiro de output
+		if ((fptr = fopen("sequencial.pgm","w+")) == NULL){
+			printf("Erro ao abrir ficheiro");
+			exit(1);
+		}
 	}
-
-	//Abrir apontador para o ficheiro de output
-    if ((fptr = fopen("sequencial.pgm","w+")) == NULL){
-    	printf("Erro ao abrir ficheiro");
-    	exit(1);
-    }
-    pgm_writepgm(fptr, sequencial, cols, rows, maxval, 1);
-    fclose(fptr);
-
-
-	for(int x = 0; x < n_iterations; x++){
+	else {
 		//Limpar a cache, começar a medição do tempo e contagem dos eventos da PAPI
 		clearCache();
 		start = omp_get_wtime();
 		retval = PAPI_start(EventSet);
 
 		// workload paralela
-		paralel = run_parallel(matrix_par, output_par, rows, cols);
+		final = run_parallel(matrix, output, rows, cols);
 
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
@@ -178,21 +147,15 @@ int main(int argc, char const *argv[]) {
 		printf("\nTempo de execução paralela %f ms\n", (end - start)*1000);
 		printf("L3MR: %f\n", values[1] / (double) values[0]);
 
-		//Repor os valores iniciais da matriz
-		if (x < n_iterations - 1)
-			for(int i = 0; i < rows; i++)
-		    	for(int j = 0; j < cols; j++) {
-		        	matrix_par[i][j] = inicial[i][j];
-					//output_par[i][j] = rand()% 256;
-				}
-
+		//Abrir o apontador para o ficheiro de output
+		if ((fptr = fopen("paralela.pgm","w+")) == NULL){
+			printf("Erro ao abrir ficheiro");
+			exit(1);
+		}
 	}
 
-	//Abrir o apontador para o ficheiro de output
-    if ((fptr = fopen("paralela.pgm","w+")) == NULL){
-    	printf("Erro ao abrir ficheiro");
-    	exit(1);
-    }
 
-	pgm_writepgm(fptr, paralel, cols, rows, maxval, 1);
+
+	pgm_writepgm(fptr, final, cols, rows, maxval, 1);
+	fclose(fptr);
 }
