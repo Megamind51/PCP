@@ -28,10 +28,11 @@ int min_vizinhos( gray **matrix, int rows, int cols, int row, int col){
     return min + 1;
 }
 
+
 gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
 	int flag = 1, iterator = 1, aux;
   	unsigned int col,row;
-
+		int i,j,min;
 	while (flag){
 		flag = 0;
 
@@ -39,11 +40,27 @@ gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
     		for (col = 0; col < cols; col++) {
 				if(iterator){
 					aux = output[row][col];
-			  		aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row,col);
+					min = matrix[row][col] -1;
+			    for(i = -1; i < 2; i++)
+			        for(j = -1; j < 2; j++)
+			            if(row + i > 0 && row + i < rows)
+			                if(col + j > 0 && col + j < cols)
+			                    if(matrix[row + i][col + j] < min){
+			                        min = matrix[row + i][col + j];
+			                    }
+			     aux -= output[row][col] = min + 1;
 				}
 				else {
 					aux = matrix[row][col];
-			  		aux -= matrix[row][col] = min_vizinhos(output, rows, cols, row,col);
+					min = output[row][col] -1;
+			    for(i = -1; i < 2; i++)
+			        for(j = -1; j < 2; j++)
+			            if(row + i > 0 && row + i < rows)
+			                if(col + j > 0 && col + j < cols)
+			                    if(output[row + i][col + j] < min){
+			                        min = output[row + i][col + j];
+			                    }
+			     aux -= matrix[row][col] = min + 1;
 				}
 
 				if(aux != 0)
@@ -60,7 +77,6 @@ gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
     	return output;
 }
 
-
 gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 	int flag = 1, aux, iterator = 1;
 
@@ -69,14 +85,29 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 		#pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(static, 1024)
 		for(int row = 0; row < rows; row++){
         	for (int col = 0; col < cols; col++) {
-
             	if(iterator){
-					aux = output[row][col];
-					aux -= output[row][col] = min_vizinhos(matrix, rows, cols, row, col);
+								aux = output[row][col];
+								int min = matrix[row][col] -1;
+						    for(int i = -1; i < 2; i++)
+						        for(int j = -1; j < 2; j++)
+						            if(row + i > 0 && row + i < rows)
+						                if(col + j > 0 && col + j < cols)
+						                    if(matrix[row + i][col + j] < min){
+						                        min = matrix[row + i][col + j];
+						                    }
+						     aux -= output[row][col] = min + 1;
 				}
             	else {
-					aux = matrix[row][col];
-					aux -= matrix[row][col] = min_vizinhos(output, rows, cols, row, col);
+								aux = matrix[row][col];
+								int min = output[row][col] -1;
+						    for(int i = -1; i < 2; i++)
+						        for(int j = -1; j < 2; j++)
+						            if(row + i > 0 && row + i < rows)
+						                if(col + j > 0 && col + j < cols)
+						                    if(output[row + i][col + j] < min){
+						                        min = output[row + i][col + j];
+						                    }
+						     aux -= matrix[row][col] = min + 1;
 				}
 
 				if(aux != 0)
@@ -92,7 +123,6 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
   	else
     	return output;
 }
-
 
 int main(int argc, char const *argv[]) {
     unsigned int rows, cols, maxval, row, col, min;
