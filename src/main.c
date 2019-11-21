@@ -79,17 +79,17 @@ gray ** run_sequencial(gray ** matrix, gray ** output, int rows, int cols){
 
 gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 	int flag = 1, aux, iterator = 1;
-
+	int min, i, j;
 	while (flag){
     	flag = 0;
-		#pragma omp parallel for collapse(2) private(aux) reduction(max:flag) schedule(static, 1024)
+		#pragma omp parallel for collapse(2) private(aux, min, i, j) reduction(||:flag) schedule(static, 1024)
 		for(int row = 0; row < rows; row++){
         	for (int col = 0; col < cols; col++) {
             	if(iterator){
 								aux = output[row][col];
-								int min = matrix[row][col] -1;
-						    for(int i = -1; i < 2; i++)
-						        for(int j = -1; j < 2; j++)
+								min = matrix[row][col] -1;
+						    for(i = -1; i < 2; i++)
+						        for(j = -1; j < 2; j++)
 						            if(row + i > 0 && row + i < rows)
 						                if(col + j > 0 && col + j < cols)
 						                    if(matrix[row + i][col + j] < min){
@@ -99,9 +99,9 @@ gray ** run_parallel(gray ** matrix, gray ** output, int rows, int cols){
 				}
             	else {
 								aux = matrix[row][col];
-								int min = output[row][col] -1;
-						    for(int i = -1; i < 2; i++)
-						        for(int j = -1; j < 2; j++)
+								min = output[row][col] -1;
+						    for(i = -1; i < 2; i++)
+						        for( j = -1; j < 2; j++)
 						            if(row + i > 0 && row + i < rows)
 						                if(col + j > 0 && col + j < cols)
 						                    if(output[row + i][col + j] < min){
@@ -153,8 +153,7 @@ int main(int argc, char const *argv[]) {
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
 		retval = PAPI_stop(EventSet, values);
-		printf("\nTempo de execução sequencial: %f ms\n", (end - start)*1000);
-		printf("L3MR: %f\n", values[1] / (double) values[0]);
+		printf(";%f", (end - start)*1000);
 
 		//Abrir apontador para o ficheiro de output
 		if ((fptr = fopen("sequencial.pgm","w+")) == NULL){
@@ -174,8 +173,7 @@ int main(int argc, char const *argv[]) {
 		//Medir o tempo, contadores da PAPI e reportar resultados
 		end = omp_get_wtime();
 		retval = PAPI_stop(EventSet, values);
-		printf("\nTempo de execução paralela %f ms\n", (end - start)*1000);
-		printf("L3MR: %f\n", values[1] / (double) values[0]);
+		printf(";%f", (end - start)*1000);
 
 		//Abrir o apontador para o ficheiro de output
 		if ((fptr = fopen("paralela.pgm","w+")) == NULL){
