@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* pgm.h - header file for libpgm portable graymap library
 */
 
@@ -16,7 +20,7 @@ typedef unsigned int gray;
    (because then old Netpbm programs can process them, and they're
    only half as big).
 
-   So we keep PGM_MAXMAXVAL = 255, even though it's kind of a misnomer.  
+   So we keep PGM_MAXMAXVAL = 255, even though it's kind of a misnomer.
 
    Note that one could always write a file with maxval > PGM_MAXMAXVAL and
    it would just go into plain (text) format instead of raw (binary) format.
@@ -74,8 +78,13 @@ void
 pgm_nextimage(FILE * const file, int * const eofP);
 
 void
-pgm_check(FILE * file, const enum pm_check_type check_type, 
+pgm_check(FILE * file, const enum pm_check_type check_type,
           const int format, const int cols, const int rows, const int maxval,
           enum pm_check_code * const retval_p);
 
 #endif /*_PGM_H_*/
+
+
+#ifdef __cplusplus
+}
+#endif

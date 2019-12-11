@@ -1,3 +1,6 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
 /*----------------------------------------------------------------------------
    These are declarations for use with the Portable Arbitrary Map (PAM)
    format and the Netpbm library functions specific to them.
@@ -14,7 +17,7 @@ struct pam {
 /* This structure describes an open PAM image file.  It consists
    entirely of information that belongs in the header of a PAM image
    and filesystem information.  It does not contain any state
-   information about the processing of that image.  
+   information about the processing of that image.
 
    This is not considered to be an opaque object.  The user of Netbpm
    libraries is free to access and set any of these fields whenever
@@ -26,11 +29,11 @@ struct pam {
        backward compatibility between library functions and calling programs
        as this structure grows.
        */
-    unsigned int size;   
+    unsigned int size;
         /* The storage size of this entire structure, in bytes */
-    unsigned int len;    
+    unsigned int len;
         /* The length, in bytes, of the information in this structure.
-           The information starts in the first byte and is contiguous.  
+           The information starts in the first byte and is contiguous.
            This cannot be greater than 'size'
            */
     FILE *file;
@@ -42,25 +45,25 @@ struct pam {
     unsigned int plainformat;
         /* Logical:  the format above is a plain (text) format as opposed
            to a raw (binary) format.  This is entirely redundant with the
-           'format' member and exists as a separate member only for 
+           'format' member and exists as a separate member only for
            computational speed.
         */
     int height;  /* Height of image in rows */
-    int width;   
+    int width;
         /* Width of image in number of columns (tuples per row) */
-    unsigned int depth;   
+    unsigned int depth;
         /* Depth of image (number of samples in each tuple). */
     sample maxval;  /* Maximum defined value for a sample */
-    unsigned int bytes_per_sample;  
+    unsigned int bytes_per_sample;
         /* Number of bytes used to represent each sample in the image file.
            Note that this is strictly a function of 'maxval'.  It is in a
            a separate member for computational speed.
            */
     char tuple_type[256];
-        /* The tuple type string from the image header.  Netpbm does 
+        /* The tuple type string from the image header.  Netpbm does
            not define any values for this except the following, which are
            used for a PAM image which is really a view of a PBM, PGM,
-           or PPM image:  PAM_PBM_TUPLETYPE, PAM_PGM_TUPLETYPE, 
+           or PPM image:  PAM_PBM_TUPLETYPE, PAM_PGM_TUPLETYPE,
            PAM_PPM_TUPLETYPE.
            */
 };
@@ -74,7 +77,7 @@ struct pam {
     /* These are values of samples in a PAM image that represents a black
        and white bitmap image.  They are the values of black and white,
        respectively.  For example, if you use pnm_readpamrow() to read a
-       row from a PBM file, the black pixels get returned as 
+       row from a PBM file, the black pixels get returned as
        PAM_PBM_BLACK.
     */
 
@@ -92,7 +95,7 @@ struct pam {
        for transparency.  0 = transparent, maxval = opaque.
     */
 
-typedef sample *tuple;  
+typedef sample *tuple;
     /* A tuple in a PAM.  This is an array such that tuple[i-1] is the
        ith sample (element) in the tuple.  It's dimension is the depth
        of the image (see pam.depth above).
@@ -119,8 +122,8 @@ char
 stripeq(const char * const comparand, const char * const comparator);
 
 int
-pnm_tupleequal(const struct pam * const pamP, 
-               tuple              const comparand, 
+pnm_tupleequal(const struct pam * const pamP,
+               tuple              const comparand,
                tuple              const comparator);
 
 void
@@ -129,13 +132,13 @@ pnm_assigntuple(const struct pam * const pamP,
                 tuple              const source);
 
 static __inline__ sample
-pnm_scalesample(sample const source, 
+pnm_scalesample(sample const source,
                 sample   const oldmaxval, sample const newmaxval) {
 
     if (oldmaxval == newmaxval)
         /* Fast path for common case */
         return source;
-    else 
+    else
         return (source * newmaxval + (oldmaxval/2)) / oldmaxval;
 }
 
@@ -144,7 +147,7 @@ pnm_scalesample(sample const source,
 void
 pnm_scaletuple(const struct pam * const pamP,
                tuple              const dest,
-               tuple              const source, 
+               tuple              const source,
                sample             const newmaxval);
 
 void
@@ -167,38 +170,42 @@ void
 pnm_freepamarray(tuple ** const tuplearray, struct pam * const pamP);
 
 void
-pnm_setpamrow(struct pam const pam, 
-              tuple *    const tuplerow, 
+pnm_setpamrow(struct pam const pam,
+              tuple *    const tuplerow,
               sample     const value);
 
-void 
+void
 pnm_readpaminit(FILE *file, struct pam * const pamP, const int size);
 
-void 
+void
 pnm_readpamrow(struct pam * const pamP, tuple* const tuplerow);
 
-tuple** 
+tuple**
 pnm_readpam(FILE *file, struct pam * const pamP, const int size);
 
-void 
+void
 pnm_writepaminit(struct pam * const pamP);
 
-void 
+void
 pnm_writepamrow(struct pam * const pamP, const tuple * const tuplerow);
 
-void 
+void
 pnm_writepam(struct pam * const pamP, tuple ** const tuplearray);
 
 void
-pnm_checkpam(struct pam * const pamP, const enum pm_check_type check_type, 
+pnm_checkpam(struct pam * const pamP, const enum pm_check_type check_type,
              enum pm_check_code * const retvalP);
 
-extern double 
+extern double
 pnm_lumin_factor[3];
 
 void
-pnm_YCbCrtuple(const tuple tuple, 
+pnm_YCbCrtuple(const tuple tuple,
                double * const YP, double * const CbP, double * const CrP);
 
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

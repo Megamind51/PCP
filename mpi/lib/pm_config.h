@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #ifndef _PM_CONFIG_H
 #define _PM_CONFIG_H
 /**************************************************************************
@@ -14,20 +18,20 @@
 
   Wherever possible, Netpbm handles customization via the make files
   instead of via this file.  However, Netpbm's make file philosophy
-  discourages lining up a bunch of -D options on every compile, so a 
+  discourages lining up a bunch of -D options on every compile, so a
   #define here would be preferable to a -D compile option.
 
 **************************************************************************/
 
 /* uint32n is a 32 bit unsigned integer.  There are a bunch of other
-   conventional names for this data type, but we don't know any that 
+   conventional names for this data type, but we don't know any that
    are available in all compilation environments, or absent in all
    compilation environments, so we have to make up our own that we hope
    no one else defines.
 
    We don't know today of any environment where "unsigned int" is not
-   32 bits, but we also don't know that there aren't any, so we have 
-   infrastructure here for the eventuality that we find one where 
+   32 bits, but we also don't know that there aren't any, so we have
+   infrastructure here for the eventuality that we find one where
    uint32n has to be something else.  If you understand the standards
    and conventions for 32 bit vs 64 bit, please enlighten the Netpbm
    maintainer.  2002.01.16.
@@ -59,12 +63,12 @@ typedef signed int int32n;
    what feature sets his program relies.
 
    But some C library developers have misunderstood this and think of these
-   macros like the old __ansi__ macro, which tells the C library, "Don't 
+   macros like the old __ansi__ macro, which tells the C library, "Don't
    have any features that aren't in the ANSI standard."  I.e. it's just
    the opposite -- the macro subtracts features instead of adding them.
 
    This means that on some platforms, Netpbm programs must define
-   _POSIX_SOURCE, and on others, it must not.  Netpbm's POSIX_IS_IMPLIED 
+   _POSIX_SOURCE, and on others, it must not.  Netpbm's POSIX_IS_IMPLIED
    macro indicates that we're on a platform where we need not define
    _POSIX_SOURCE (and probably must not).
 */
@@ -89,7 +93,7 @@ typedef signed int int32n;
    also another library that defines bool, he can either make the
    other library define/respect HAVE_BOOL or just define HAVE_BOOL in
    the file that includes pm_config.h or with a compiler option.  Note
-   that C++ always has bool.  
+   that C++ always has bool.
 */
 #ifndef TRUE
 #define TRUE 1
@@ -140,7 +144,7 @@ typedef int bool;
 ** be a win.  Under these circumstances it will make some of the
 ** programs use 3 times less space, but all of the programs will run
 ** slower.  In one test, it was 1.4 times slower.
-** 
+**
 */
 /* #define PPM_PACKCOLORS */
 
@@ -164,8 +168,8 @@ typedef int bool;
 extern void srand();
 extern int rand();
 */
-/* Before Netpbm 9.15, there were macro definitions of index() and 
-   rindex() here, but there are no longer any invocations of those 
+/* Before Netpbm 9.15, there were macro definitions of index() and
+   rindex() here, but there are no longer any invocations of those
    functions in Netpbm, except in the VMS-only code, so there's no
    reason for them.
 */
@@ -184,7 +188,7 @@ extern int rand();
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
-/* 
+/*
    Before Netpbm 9.0, atoi() and exit() were declared for everybody
    except MSDOS and AMIGA, and time() and write() were declared for
    everybody except MSDOS, AMIGA, and __osf__.  fcntl.h, time.h, and
@@ -194,17 +198,17 @@ extern int rand();
 
    We're hoping that all current systems have the standard header
    files, and will reinstate some of these explicit declarations if we
-   hear otherwise.  
+   hear otherwise.
 
    If it turns out to be this easy, we should just move these inclusions
    to the source files that actually need them.
-   
+
    -Bryan 2000.04.13
 
 extern int atoi();
 extern void exit();
 extern long time();
-extern int write(); 
+extern int write();
 */
 
 /* CONFIGURE: On most BSD systems, malloc() gets declared in stdlib.h, on
@@ -298,4 +302,9 @@ extern int write();
 */
 #define EXTERNDATA extern
 
+#endif
+
+
+#ifdef __cplusplus
+}
 #endif

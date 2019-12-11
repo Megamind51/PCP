@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* pnm.h - header file for libpnm portable anymap library
 */
 
@@ -36,34 +40,38 @@ void pnm_writepnminit ARGS(( FILE* file, int cols, int rows, xelval maxval, int 
 void pnm_writepnmrow ARGS(( FILE* file, xel* xelrow, int cols, xelval maxval, int format, int forceplain ));
 
 void
-pnm_check(FILE * file, const enum pm_check_type check_type, 
+pnm_check(FILE * file, const enum pm_check_type check_type,
           const int format, const int cols, const int rows, const int maxval,
           enum pm_check_code * const retval_p);
 
 
-xel 
+xel
 pnm_backgroundxel (xel** xels, int cols, int rows, xelval maxval, int format);
 
-xel 
+xel
 pnm_backgroundxelrow (xel* xelrow, int cols, xelval maxval, int format);
 
-xel 
+xel
 pnm_whitexel (xelval maxval, int format);
 
-xel 
+xel
 pnm_blackxel(xelval maxval, int format);
 
-void 
+void
 pnm_invertxel(xel* x, xelval maxval, int format);
 
-void 
-pnm_promoteformat(xel** xels, int cols, int rows, xelval maxval, int format, 
+void
+pnm_promoteformat(xel** xels, int cols, int rows, xelval maxval, int format,
                   xelval newmaxval, int newformat);
-void 
-pnm_promoteformatrow(xel* xelrow, int cols, xelval maxval, int format, 
+void
+pnm_promoteformatrow(xel* xelrow, int cols, xelval maxval, int format,
                      xelval newmaxval, int newformat);
 
 pixel
 xeltopixel(xel const inputxel);
 
 #endif /*_PNM_H_*/
+
+#ifdef __cplusplus
+}
+#endif

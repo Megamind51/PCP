@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* ppm.h - header file for libppm portable pixmap library
 */
 
@@ -82,7 +86,7 @@ void ppm_writeppminit ARGS(( FILE* file, int cols, int rows, pixval maxval, int 
 void ppm_writeppmrow ARGS(( FILE* file, pixel* pixelrow, int cols, pixval maxval, int forceplain ));
 
 void
-ppm_check(FILE * file, const enum pm_check_type check_type, 
+ppm_check(FILE * file, const enum pm_check_type check_type,
           const int format, const int cols, const int rows, const int maxval,
           enum pm_check_code * const retval_p);
 
@@ -122,3 +126,6 @@ char* ppm_colorname ARGS(( pixel* colorP, pixval maxval, int hexok ));
 
 #endif /*_PPM_H_*/
 
+#ifdef __cplusplus
+}
+#endif

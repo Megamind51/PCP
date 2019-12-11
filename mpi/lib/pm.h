@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* pm.h - interface to format-independent part of libpbm.
 **
 ** Copyright (C) 1988, 1989, 1991 by Jef Poskanzer.
@@ -79,10 +83,10 @@ typedef int bool;
 #define ARGS(alist) alist
 
 
-void 
+void
 pm_init(const char * const progname, unsigned int const flags);
 
-void 
+void
 pm_proginit(int* const argcP, char* argv[]);
 
 void
@@ -93,32 +97,32 @@ pm_nextimage(FILE * const file, int * const eofP);
 
 /* Variable-sized arrays definitions. */
 
-char** 
+char**
 pm_allocarray (int const cols, int const rows, int const size );
 
-char* 
+char*
 pm_allocrow (int const cols, int const size);
 
-void 
+void
 pm_freearray (char** const its, int const rows);
 
-void 
+void
 pm_freerow(char* const itrow);
 
 
 /* Obsolete -- use shhopt instead */
-int 
+int
 pm_keymatch (char* const str, char* const keyword, int const minchars);
 
 
-int 
+int
 pm_maxvaltobits (int const maxval);
 
-int 
+int
 pm_bitstomaxval (int const bits);
 
-unsigned int 
-pm_lcm (const unsigned int x, 
+unsigned int
+pm_lcm (const unsigned int x,
         const unsigned int y,
         const unsigned int z,
         const unsigned int limit);
@@ -134,35 +138,35 @@ pm_lcm (const unsigned int x,
 #endif
 
 void GNU_PRINTF_ATTR
-pm_message (const char format[], ...);     
+pm_message (const char format[], ...);
 
 void GNU_PRINTF_ATTR
-pm_error (const char reason[], ...);       
+pm_error (const char reason[], ...);
 
 /* Obsolete - use helpful error message instead */
 void
-pm_perror (const char reason[]);           
+pm_perror (const char reason[]);
 
 /* Obsolete - use shhopt and man page instead */
-void 
-pm_usage (const char usage[]);             
+void
+pm_usage (const char usage[]);
 
-FILE* 
+FILE*
 pm_openr (const char* const name);
-         
-FILE*    
+
+FILE*
 pm_openw (const char* const name);
-         
+
 FILE *
 pm_openr_seekable(const char name[]);
 
-void     
+void
 pm_close (FILE* const f);
 
-void 
+void
 pm_closer (FILE* const f);
-          
-void      
+
+void
 pm_closew (FILE* const f);
 
 
@@ -191,7 +195,7 @@ pm_readlittlelong ( FILE* const in, long* const lP );
 int
 pm_writelittlelong ( FILE* const out, long const l );
 
-char* 
+char*
 pm_read_unknown_size(FILE* const file, long* const buf);
 
 unsigned int
@@ -213,7 +217,7 @@ enum pm_check_type {
 };
 
 void
-pm_check(FILE * const file, const enum pm_check_type check_type, 
+pm_check(FILE * const file, const enum pm_check_type check_type,
          const unsigned int need_raster_size,
          enum pm_check_code * const retval_p);
 
@@ -232,14 +236,14 @@ void overflow_add(int, int);
 /* Use pm_optParseOptions instead of optParseOptions in order to use the
    shared Netpbm libraries
 */
-void 
+void
 pm_optParseOptions(int * const argc, char *argv[],
                    optStruct opt[], int const allowNegNum);
-void 
+void
 pm_optParseOptions2(int * const argc, char *argv[],
                     const optStruct2 opt, const unsigned long flags);
 void
-pm_optParseOptions3(int * const argc_p, char *argv[], const optStruct3 opt, 
+pm_optParseOptions3(int * const argc_p, char *argv[], const optStruct3 opt,
                  const unsigned int optStructSize, const unsigned long flags);
 
 char *
@@ -247,3 +251,6 @@ pm_arg0toprogname(const char arg0[]);
 
 #endif
 
+#ifdef __cplusplus
+}
+#endif

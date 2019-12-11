@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* pbm.h - header file for libpbm portable bitmap library
 */
 
@@ -44,20 +48,25 @@ bit** pbm_readpbm(FILE* file, int* colsP, int* rowsP);
 void pbm_readpbminit(FILE* file, int* colsP, int* rowsP, int* formatP);
 void pbm_readpbmrow(FILE* file, bit* bitrow, int cols, int format);
 void pbm_readpbmrow_packed(
-    FILE* const file, unsigned char * const packed_bits, 
+    FILE* const file, unsigned char * const packed_bits,
     const int cols, const int format);
 
 void pbm_writepbm (FILE* file, bit** bits, int cols, int rows, int forceplain);
 void pbm_writepbminit(FILE* file, int cols, int rows, int forceplain);
 void pbm_writepbmrow (FILE* file, bit* bitrow, int cols, int forceplain);
 void pbm_writepbmrow_packed(
-    FILE* const file, const unsigned char * const packed_bits, 
+    FILE* const file, const unsigned char * const packed_bits,
     const int cols, const int format);
 
 void
-pbm_check(FILE * file, const enum pm_check_type check_type, 
+pbm_check(FILE * file, const enum pm_check_type check_type,
           const int format, const int cols, const int rows,
           enum pm_check_code * const retval_p);
 
 #endif /*_PBM_H_*/
 
+
+
+#ifdef __cplusplus
+}
+#endif
