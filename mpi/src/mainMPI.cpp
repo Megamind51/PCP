@@ -133,9 +133,9 @@ int main(int argc, char *argv[]) {
 			matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
 			output = pgm_allocarray(cols, rows);
 			resultado = pgm_allocarray(cols, rows);
+      gray ** transpose   = pgm_allocarray(cols,rows);
 
-			maxdistance = rows + cols;
-			int partition = rows / (nprocesses-1); // Elementos para cada processo (-1 pq processo 0 nao processa imagens so sicroniza)
+      int partition = rows / (nprocesses-1); // Elementos para cada processo (-1 pq processo 0 nao processa imagens so sicroniza)
 			int aux[2] = {cols,partition};
 			int i = 1;
 			//enviar tamanho de linhas e colunas para processos alugarem memoria necessaria
@@ -216,13 +216,8 @@ int main(int argc, char *argv[]) {
 									 }
 						 }
 
-			//start = MPI_Wtime();
-				// workload paralela
-			//final = run_parallel(matrix, rows, cols);
 
-				//Medir o tempo, contadores da PAPI e reportar resultados
-		//	end = MPI_Wtime();
-		//	printf(";%f", (end - start)*1000);
+
 
 			//Abrir o apontador para o ficheiro de output
 			if ((fptr = fopen("paralela.pgm","w+")) == NULL){
@@ -236,7 +231,7 @@ int main(int argc, char *argv[]) {
 			}
 	// Processos trabalhadores
 	else{
-		int initial_data[2] = {0,0};
+    int initial_data[2] = {0,0};
 		MPI_Recv( initial_data, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, &status ); // receber o tamanho de cada linha e numero de linhas que vai receber
 		printf("Este recebeu  = %d , COL = %d ; ROW = %d \n", myrank, initial_data[0], initial_data[1]);
 
@@ -252,17 +247,26 @@ int main(int argc, char *argv[]) {
 		for(int i=0;i<initial_data[1];i++){
 				//check for obstacle in the entire row
 				//Left to right pass
-				for(int j=1;j<initial_data[0];j++){
-						if(processar[i][j])
-								resultado[i][j]=min(255,1+resultado[i][j-1]);
-						else
-								resultado[i][j]=0;
-				}
-				//Right to left pass
-				for(int j=initial_data[0]-2;j>=0;j--){
-						if (resultado[i][j+1]<resultado[i][j])
-								resultado[i][j]=min(255,1+resultado[i][j+1]);
-				}
+
+        if(resultado[i][0])
+  					resultado[i][0]=0;
+  			else
+  					resultado[i][0]=255;
+
+
+  			//check for obstacle in the entire row
+  			//Left to right pass
+  			for(int j=1;j<initial_data[0];j++){
+  					if(processar[i][j])
+  							resultado[i][j]=min(255,1+resultado[i][j-1]);
+  					else
+  							resultado[i][j]=0;
+  			}
+  			//Right to left pass
+  			for(int j=initial_data[0]-2;j>=0;j--){
+  					if (resultado[i][j+1]<resultado[i][j])
+  							resultado[i][j]=min(255,1+resultado[i][j+1]);
+  			}
 		}
 
 		//enviar linhas para processo sicronizador
@@ -271,52 +275,6 @@ int main(int argc, char *argv[]) {
 			MPI_Send( resultado[i], initial_data[0], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
  		//	printf("Eu %d enviar linha %d\n",myrank,i );
 		}
-// a arder
-/*
-		//receber dados para fase 2
-		for (int i = 0; i <  initial_data[1]; i++ ){
-			MPI_Recv( resultado[i], initial_data[0], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status  ); // receber linhas
-		//	printf("Eu %d Recebi linha %d\n",myrank,i );
-		}
-		//processar dados Fase 2 :D KILL ME PLZ
-			 //Lower envelope indices
-			 int s[initial_data[1]];
-			 // same least minimizers
-			 int t[initial_data[1]]];
-			 int q=0;
-			 int w;
-			 for (int j=0;j<initial_data[1]];j++)
-			 {
-			 		//intialise variables
-			 		q=0;
-			 		s[0]=0;
-			 		t[0]=0;
-							//Top to bottom scan To compute paritions of [0,m)
-							for (int u=1;u<initial_data[0]];u++){
-									while(q>=0 && ((CDT_f(t[q],s[q],(int)resultado[s[q]][j]))>CDT_f(t[q],u,(int)resultado[u][j])))
-											q--;
-									if(q<0){
-											q=0;
-											s[0]=u;
-									}
-									else{
-											//Finds sub-regions
-											w = 1+CDT_sep(s[q],u,(int)resultado[s[q]][j],(int)resultado[u][j]);
-											if(w<initial_data[0]]){
-													q++;
-													s[q]=u;
-													t[q]=w;
-											}
-									}
-							}
-							//bottom to top of image to find final DT using lower envelope
-							for (int u=initial_data[0]]-1;u>=0;u--){
-									output[u][j]= CDT_f(u,s[q],(int)resultado[s[q]][j]); // só aqui é que é alterado a matrix output
-									if(u==t[q])
-											q--;
-										}
-							}
-*/
 	}
 
   MPI_Finalize ();

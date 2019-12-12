@@ -36,17 +36,18 @@ int CDT_sep(int i,int u, int g_i,int g_u)
 gray ** run_sequencial(gray ** matrix, int rows, int cols){
 	gray ** resultado = pgm_allocarray(cols,rows);
 	gray ** output    = pgm_allocarray(cols,rows);
+	gray ** transpose    = pgm_allocarray(cols,rows);
 	//Fase 1 - EZ CLAP
 	for(int i=0;i<rows;i++){
 		//ACHO QUE ESTA MERDA NAO È PRECISO DE MEXER NAS BORDAS
 
 			//if border is > 0 make it 0 else 255
-			/*
-			if(matrix[i][0])
+
+			if(resultado[i][0])
 					resultado[i][0]=0;
 			else
 					resultado[i][0]=255;
-			*/
+
 
 			//check for obstacle in the entire row
 			//Left to right pass
@@ -62,7 +63,6 @@ gray ** run_sequencial(gray ** matrix, int rows, int cols){
 							resultado[i][j]=min(255,1+resultado[i][j+1]);
 			}
 	}
-
 	// Fase 2 plz help
 
 
@@ -100,7 +100,7 @@ gray ** run_sequencial(gray ** matrix, int rows, int cols){
 					for (int u=cols-1;u>=0;u--){
 							output[u][j]= CDT_f(u,s[q],(int)resultado[s[q]][j]); // só aqui é que é alterado a matrix output
 							if(u==t[q])
-									q--;
+									q--; 
 								}
 					}
 
