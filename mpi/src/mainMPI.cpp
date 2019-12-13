@@ -24,87 +24,6 @@ int CDT_sep(int i,int u, int g_i,int g_u)
         return fmin(u-g_i,floor((i+u)/2));
 }
 
-
-gray ** run_sequencial(gray ** matrix, int rows, int cols){
-	gray ** resultado = pgm_allocarray(cols,rows);
-	gray ** output    = pgm_allocarray(cols,rows);
-	//Fase 1 - EZ CLAP
-	for(int i=0;i<rows;i++){
-		//ACHO QUE ESTA MERDA NAO È PRECISO DE MEXER NAS BORDAS
-
-			//if border is > 0 make it 0 else 255
-			/*
-			if(matrix[i][0])
-					resultado[i][0]=0;
-			else
-					resultado[i][0]=255;
-			*/
-
-			//check for obstacle in the entire row
-			//Left to right pass
-			for(int j=1;j<cols;j++){
-					if(matrix[i][j])
-							resultado[i][j]=min(255,1+resultado[i][j-1]);
-					else
-							resultado[i][j]=0;
-			}
-			//Right to left pass
-			for(int j=cols-2;j>=0;j--){
-					if (resultado[i][j+1]<resultado[i][j])
-							resultado[i][j]=min(255,1+resultado[i][j+1]);
-			}
-	}
-
-	// Fase 2 plz help
-
-
-	 //Lower envelope indices
-	 int s[rows];
-	 // same least minimizers
-	 int t[rows];
-	 int q=0;
-	 int w;
-	 for (int j=0;j<rows;j++)
-	 {
-	 		//intialise variables
-	 		q=0;
-	 		s[0]=0;
-	 		t[0]=0;
-					//Top to bottom scan To compute paritions of [0,m)
-					for (int u=1;u<cols;u++){
-							while(q>=0 && ((CDT_f(t[q],s[q],(int)resultado[s[q]][j]))>CDT_f(t[q],u,(int)resultado[u][j])))
-									q--;
-							if(q<0){
-									q=0;
-									s[0]=u;
-							}
-							else{
-									//Finds sub-regions
-									w = 1+CDT_sep(s[q],u,(int)resultado[s[q]][j],(int)resultado[u][j]);
-									if(w<cols){
-											q++;
-											s[q]=u;
-											t[q]=w;
-									}
-							}
-					}
-					//bottom to top of image to find final DT using lower envelope
-					for (int u=cols-1;u>=0;u--){
-							output[u][j]= CDT_f(u,s[q],(int)resultado[s[q]][j]); // só aqui é que é alterado a matrix output
-							if(u==t[q])
-									q--;
-								}
-					}
-
-	return output;
-}
-
-gray ** run_parallel(gray ** matrix, int rows, int cols){
-
-
-	return matrix;
-}
-
 int main(int argc, char *argv[]) {
 
 	// Cenas MPI
@@ -177,22 +96,28 @@ int main(int argc, char *argv[]) {
 				MPI_Recv(resultado[(i-1)*partition+j], cols, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
 			//	printf("Enviar linha %d para %d\n",i*partition+j, i  );
 			}
-			printf("Chegou aqui\n"  );
+
+      for( int a = 0; a < rows; a++)
+        for( int b = 0; b < cols; b++)
+          transpose[b][a] = resultado[a][b];
+
+
+      printf("Chegou aqui\n"  );
 			//Lower envelope indices
-			int s[rows];
+			int s[cols];
 			// same least minimizers
-			int t[rows];
+			int t[cols];
 			int q=0;
 			int w;
-			for (int j=0;j<rows;j++)
+			for (int j=0;j<cols;j++) // Linhas
 			{
 				 //intialise variables
 				 q=0;
 				 s[0]=0;
 				 t[0]=0;
 						 //Top to bottom scan To compute paritions of [0,m)
-						 for (int u=1;u<cols;u++){
-								 while(q>=0 && ((CDT_f(t[q],s[q],(int)resultado[s[q]][j]))>CDT_f(t[q],u,(int)resultado[u][j])))
+						 for (int u=1;u<rows;u++){ //Colunas
+								 while(q>=0 && ((CDT_f(t[q],s[q],(int)transpose[j][s[q]]))>CDT_f(t[q],u,(int)transpose[j][u])))
 										 q--;
 								 if(q<0){
 										 q=0;
@@ -200,8 +125,8 @@ int main(int argc, char *argv[]) {
 								 }
 								 else{
 										 //Finds sub-regions
-										 w = 1+CDT_sep(s[q],u,(int)resultado[s[q]][j],(int)resultado[u][j]);
-										 if(w<cols){
+										 w = 1+CDT_sep(s[q],u,(int)transpose[j][s[q]],(int)transpose[j][u]);
+										 if(w<rows){
 												 q++;
 												 s[q]=u;
 												 t[q]=w;
@@ -209,13 +134,17 @@ int main(int argc, char *argv[]) {
 								 }
 						 }
 						 //bottom to top of image to find final DT using lower envelope
-						 for (int u=cols-1;u>=0;u--){
-								 output[u][j]= CDT_f(u,s[q],(int)resultado[s[q]][j]); // só aqui é que é alterado a matrix output
+						 for (int u=rows-1;u>=0;u--){
+								 output[j][u]= CDT_f(u,s[q],(int)transpose[j][s[q]]); // só aqui é que é alterado a matrix output
 								 if(u==t[q])
 										 q--;
 									 }
 						 }
 
+
+                   for( int a = 0; a < cols; a++)
+                     for( int b = 0; b < rows; b++)
+                       transpose[b][a] = output[a][b];
 
 
 
@@ -225,7 +154,7 @@ int main(int argc, char *argv[]) {
 				exit(1);
 			}
 
-			pgm_writepgm(fptr, output, cols, rows, maxval, 1);
+			pgm_writepgm(fptr, transpose, cols, rows, maxval, 1);
 			fclose(fptr);
 
 			}
