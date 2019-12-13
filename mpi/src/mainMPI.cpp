@@ -37,51 +37,46 @@ int main(int argc, char *argv[]) {
 		// processo que le imagens, escreve e afins
 	if(myrank == 0){
 
-			unsigned int  maxval, row, col, min;
-		  int rows, cols;
-			//Variáveis para medição temporal e apontador para os ficheiros de output
-		  double start, end;
-		  FILE * fptr;
-			//Inicialização da PAPI
-			gray ** final;
-			gray ** matrix;
-			gray ** output;
-			gray ** resultado;
+		unsigned int  maxval, row, col, min;
+		int rows, cols;
+	    //Variáveis para medição temporal e apontador para os ficheiros de output
+	    double start, end;
+	    FILE * fptr;
 
-			pm_init(argv[0], 0);
-			matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
-			output = pgm_allocarray(cols, rows);
-			resultado = pgm_allocarray(cols, rows);
-      gray ** transpose   = pgm_allocarray(cols,rows);
+		gray ** final;
+		gray ** matrix;
+		gray ** output;
+		gray ** resultado;
+        gray ** transpose;
 
-      int partition = rows / (nprocesses-1); // Elementos para cada processo (-1 pq processo 0 nao processa imagens so sicroniza)
-			int aux[2] = {cols,partition};
-			int i = 1;
-			//enviar tamanho de linhas e colunas para processos alugarem memoria necessaria
-			for(; i < nprocesses - 1; i++){
-			//	printf("Enviar para %d\n",i );
-				MPI_Send(aux, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
-			}
-			// enviar last chunk
-	//		printf("Enviar para %d\n",i );
-			int aux_2[2] = {cols,rows - (partition*(i-1))}; // alterar o aux[2] está a dar bad trip
-			//aux[2] = rows - (partition*i);  // <- Isto da erro se alterar esta nao sei pq, bruxaria
-			MPI_Send(aux_2, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+		pm_init(argv[0], 0);
+		matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
+		output = pgm_allocarray(cols, rows);
+		resultado = pgm_allocarray(cols, rows);
+        transpose   = pgm_allocarray(cols, rows);
 
-	//		printf("Teste Send Matrix" );
-			//enviar linhas para processar
-			for(i = 1; i < nprocesses - 1; i++){
-				for( int j = 0; j < partition; j++){
-					MPI_Send(matrix[(i-1)*partition+j], cols, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
-			//		printf("Enviar linha %d para %d\n",i*partition+j, i  );
-				}
-			}
-			// enviar last chunk
+        // Determinar número de linhas a enviar a cada processo
+        int partition = rows / (nprocesses - 1);
+        // Arrays com as dimensões dos dados a ser enviados aos processos
+		int aux[2] = {cols, partition};
+        int aux_2[2] = {cols, rows - (partition * (nprocesses - 2))};
+		int i = 1;
 
-			for( int j = 0; j < rows - (partition*(i-1)); j++){
-				MPI_Send(matrix[(i-1)*partition+j], cols, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
-			//	printf("Enviar linha %d para %d\n",i*partition+j, i  );
-			}
+        // Enviar número de linhas e colunas aos processos
+		for(; i < nprocesses - 1; i++){
+			MPI_Send(aux, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+		}
+		// Enviar dimensão dos dados para o último processo
+		MPI_Send(aux_2, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+
+
+		// Enviar linhas para processar
+		for(i = 1; i < nprocesses - 1; i++){
+			MPI_Send(&(matrix[(i-1)*partition][0]), cols*partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+		}
+			// Enviar último chunk
+		MPI_Send(&(matrix[(i-1)*partition][0]), cols*aux_2[1], MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+
 
 			//receber linhas  processadas
 			for(i = 1; i < nprocesses - 1; i++){
@@ -167,10 +162,8 @@ int main(int argc, char *argv[]) {
 
 		gray ** processar    = pgm_allocarray(initial_data[0], initial_data[1]);
 		gray ** resultado    = pgm_allocarray(initial_data[0], initial_data[1]);
-		for (int i = 0; i <  initial_data[1]; i++ ){
-			MPI_Recv( processar[i], initial_data[0], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status  ); // receber linhas
- 		//	printf("Eu %d Recebi linha %d\n",myrank,i );
-		}
+
+        MPI_Recv( &(processar[0][0]), initial_data[0]*initial_data[1], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, &status  ); // receber linhas
 
 		//Fazer fase 1
 		for(int i=0;i<initial_data[1];i++){
