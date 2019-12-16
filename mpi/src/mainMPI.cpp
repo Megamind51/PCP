@@ -225,7 +225,6 @@ int main(int argc, char *argv[]) {
         processar = pgm_allocarray( initial_data[1], partition );
         resultado = pgm_allocarray( initial_data[1], partition );
 
-        printf("Este recebeu(fase 2)  = %d , COL = %d ; ROW = %d \n", myrank, initial_data[0], partition);
 
         MPI_Recv(&(processar[0][0]), initial_data[0] * partition, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
