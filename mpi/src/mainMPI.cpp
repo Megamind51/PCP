@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
         end = MPI_Wtime();
         tempo_total += (end - start);
 
-                 //Fazer fase 1
+        //Fazer fase 1
         for (int i = 0; i < initial_data[1]; i++) {
             //check for obstacle in the entire row
             //Left to right pass
@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
                  &status); // receber linhas
         end = MPI_Wtime();
         tempo_total += (end - start);
-                 //Lower envelope indices
+        //Lower envelope indices
         int s[initial_data[0]];
         // same least minimizers
         int t[initial_data[0]];
