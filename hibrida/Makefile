@@ -11,8 +11,8 @@ NETPBM_INC=-I./lib
 NETPBM_LIB=-L./lib -lnetpbm
 
 
-SOURCE1= $(SOURCE_DIR)/mainMPI.cpp
-SOURCE2= $(SOURCE_DIR)/main.cpp
+SOURCE1= $(SOURCE_DIR)/par.cpp
+SOURCE2= $(SOURCE_DIR)/seq.cpp
 
 CFLAGS= -O3 -lm -g -flto-report -fopenmp
 
@@ -21,11 +21,11 @@ MKDIR= mkdir -p
 all: $(OUTPUT1) $(OUTPUT2)
 
 
-$(OUTPUT1):  $(SOURCE1) 
+$(OUTPUT1):  $(SOURCE1)
 	    $(MKDIR) $(BIN_DIR)
 	    $(CC1) $(SOURCE1) $(CFLAGS) $(NETPBM_INC) $(NETPBM_LIB) -o $(OUTPUT1)
 
-$(OUTPUT2):  $(SOURCE2) 
+$(OUTPUT2):  $(SOURCE2)
 	    $(CC2) $(SOURCE2) $(CFLAGS) $(NETPBM_INC) $(NETPBM_LIB) -o $(OUTPUT2)
 
 

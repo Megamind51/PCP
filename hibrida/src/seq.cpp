@@ -146,7 +146,7 @@ int main(int argc, char const *argv[]) {
 
         //Medir o tempo, contadores da PAPI e reportar resultados
         end = MPI_Wtime();
-        printf(";%f", (end - start) * 1000);
+        printf("%f\n", (end - start));
 
         //Abrir apontador para o ficheiro de output
         if ((fptr = fopen("sequencial.pgm", "w+")) == NULL) {
@@ -158,7 +158,7 @@ int main(int argc, char const *argv[]) {
         start = MPI_Wtime();
         final = run_parallel(matrix, 16384, 16384);
         end = MPI_Wtime();
-        printf(";%f", (end - start) * 1000);
+        printf("%f", (end - start));
 
     } else {
         clearCache();
@@ -169,7 +169,7 @@ int main(int argc, char const *argv[]) {
 
         //Medir o tempo, contadores da PAPI e reportar resultados
         end = MPI_Wtime();
-        printf(";%f", (end - start) * 1000);
+        printf(";%f", (end - start));
 
         //Abrir o apontador para o ficheiro de output
         if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {

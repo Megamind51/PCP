@@ -103,58 +103,141 @@ int main(int argc, char *argv[]) {
 
         pm_init(argv[0], 0);
         matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
-        int aux[2] = {rows, cols};
-        MPI_Bcast(aux, 2, MPI_INT, 0, MPI_COMM_WORLD);
+        int initial_data[2] = {rows, cols};
+        MPI_Bcast(initial_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
         output = pgm_allocarray(cols, rows);
         resultado = pgm_allocarray(cols, rows);
         transpose = pgm_allocarray(cols, rows);
 
         // Determinar número de linhas a enviar a cada processo
         // Arrays com as dimensões dos dados a ser enviados aos processos
-        int partition = rows / (nprocesses - 1);
-        int tamanho_ultimo_processo = rows - (partition * (nprocesses - 2));
+        int partition = rows / (nprocesses);
+        int tamanho_ultimo_processo = rows - (partition * (nprocesses - 1));
         int i = 1;
 
         start = MPI_Wtime();
 
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
-            MPI_Send(&(matrix[(i - 1) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+            MPI_Send(&(matrix[(i) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
 
         }
         // Enviar dimensão dos dados para o último processo
-        MPI_Send(&(matrix[(i - 1) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        MPI_Send(&(matrix[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+
+
+        //FAZER TRABALHO
+        #pragma omp parallel for schedule(static,1024)
+        for (int k = 0; k < partition; k++) {
+            //check for obstacle in the entire row
+            //Left to right pass
+
+            if (resultado[k][0])
+                resultado[k][0] = 0;
+            else
+                resultado[k][0] = 255;
+
+            //check for obstacle in the entire row
+            //Left to right pass
+            for (int l = 1; l < initial_data[1]; l++) {
+                if (matrix[k][l])
+                    resultado[k][l] = min(255, 1 + resultado[k][l - 1]);
+                else
+                    resultado[k][l] = 0;
+            }
+            //Right to left pass
+            for (int l = initial_data[1] - 2; l >= 0; l--) {
+                if (resultado[k][l + 1] < resultado[k][l])
+                    resultado[k][l] = min(255, 1 + resultado[k][l + 1]);
+            }
+        }
+
+
+        //FAZER TRABALHO
+
 
 
         //receber linhas  processadas
         for (i = 1; i < nprocesses - 1; i++) {
-            MPI_Recv(&(resultado[(i - 1) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD,
+            MPI_Recv(&(resultado[(i) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD,
                      &status);
         }
         // receber last chunk
-
-        MPI_Recv(&(resultado[(i - 1) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&(resultado[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
         // fazer transposta para enviar para processos linhas à mesma
         transposta(transpose, resultado, rows, cols);
 
+
         // redefinir variaveis apos transposta
-        partition = cols / (nprocesses - 1);
-        tamanho_ultimo_processo = cols - (partition * (nprocesses - 2));
+        partition = cols / (nprocesses);
+        tamanho_ultimo_processo = cols - (partition * (nprocesses - 1));
         i = 1;
 
         // Enviar número de linhas e colunas aos processos apos transposta
         for (; i < nprocesses - 1; i++) {
-            MPI_Send(&(transpose[(i - 1) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+            MPI_Send(&(transpose[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
         }
         // Enviar dimensão dos dados para o último processo apos transposta
-        MPI_Send(&(transpose[(i - 1) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        MPI_Send(&(transpose[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+
+
+
+
+        //FAZER TRABALHO
+
+        //Lower envelope indices
+        int s[initial_data[0]];
+        // same least minimizers
+        int t[initial_data[0]];
+        int q = 0;
+        int w;
+
+        #pragma omp parallel for schedule(static,1024)
+        for (int j = 0; j < partition; j++) // Linhas
+        {
+            //intialise variables
+            q = 0;
+            s[0] = 0;
+            t[0] = 0;
+            //Top to bottom scan To compute paritions of [0,m)
+            for (int u = 1; u < initial_data[0]; u++) {
+
+                while (q >= 0 &&
+                       ((CDT_f(t[q], s[q], (int) transpose[j][s[q]])) > CDT_f(t[q], u, (int) transpose[j][u])))
+                    q--;
+                if (q < 0) {
+                    q = 0;
+                    s[0] = u;
+                } else {
+                    //Finds sub-regions
+                    w = 1 + CDT_sep(s[q], u, (int) transpose[j][s[q]], (int) transpose[j][u]);
+                    if (w < initial_data[0]) {
+                        q++;
+                        s[q] = u;
+                        t[q] = w;
+                    }
+                }
+
+            }
+            //bottom to top of image to find final DT using lower envelope
+            for (int u = initial_data[0] - 1; u >= 0; u--) {
+                output[j][u] = CDT_f(u, s[q], (int) transpose[j][s[q]]); // só aqui é que é alterado a matrix output
+                if (u == t[q])
+                    q--;
+            }
+
+        }
+
+
+        //FAZER TRABALHO
+
 
         //receber linhas  processadas apos fase 2
         for (i = 1; i < nprocesses - 1; i++) {
-            MPI_Recv(&(output[(i - 1) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+            MPI_Recv(&(output[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
         }
         // receber last chunk apos fase 2
-        MPI_Recv(&(output[(i - 1) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&(output[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
 
         // transposta para voltar ao formato inicial
         transposta(transpose, output, rows, cols);
@@ -178,9 +261,9 @@ int main(int argc, char *argv[]) {
         // receber o tamanho de cada linha e numero de linhas que vai receber
         MPI_Bcast(initial_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
-        int partition = initial_data[0] / (nprocesses - 1);
+        int partition = initial_data[0] / (nprocesses );
         if ( myrank == nprocesses - 1 ){
-            partition = initial_data[0] - (partition * (nprocesses - 2));
+            partition = initial_data[0] - (partition * (nprocesses - 1));
         }
 
         gray **processar = pgm_allocarray(initial_data[1], partition );
@@ -189,6 +272,7 @@ int main(int argc, char *argv[]) {
         MPI_Recv(&(processar[0][0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
         //Fazer fase 1
+        #pragma omp parallel for schedule(static,1024)
         for (int i = 0; i < partition; i++) {
             //check for obstacle in the entire row
             //Left to right pass
@@ -217,9 +301,9 @@ int main(int argc, char *argv[]) {
         MPI_Send(&(resultado[0][0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0,
                  MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
 
-         partition = initial_data[1] / (nprocesses - 1);
+         partition = initial_data[1] / (nprocesses);
          if ( myrank == nprocesses - 1 ){
-             partition = initial_data[1] - (partition * (nprocesses - 2));
+             partition = initial_data[1] - (partition * (nprocesses - 1));
          }
 
         processar = pgm_allocarray( initial_data[1], partition );
@@ -235,6 +319,7 @@ int main(int argc, char *argv[]) {
         int t[initial_data[0]];
         int q = 0;
         int w;
+        #pragma omp parallel for schedule(static,1024)
         for (int j = 0; j < partition; j++) // Linhas
         {
 
