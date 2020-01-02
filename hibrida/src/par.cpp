@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "pam.h"
+#include <omp.h>
 
 
 //Chessboard DT F function
@@ -81,7 +82,8 @@ int main(int argc, char *argv[]) {
     int nprocesses, nprocess_total;
     int myrank;
     MPI_Status status;
-    MPI_Init(&argc, &argv);
+    int aux;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &aux);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocesses);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     double start, end, tempo_total;
@@ -123,11 +125,12 @@ int main(int argc, char *argv[]) {
 
         }
         // Enviar dimensão dos dados para o último processo
-        MPI_Send(&(matrix[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        if (nprocesses > 1)
+            MPI_Send(&(matrix[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
 
 
         //FAZER TRABALHO
-        #pragma omp parallel for schedule(static,1024)
+        #pragma omp parallel for
         for (int k = 0; k < partition; k++) {
             //check for obstacle in the entire row
             //Left to right pass
@@ -163,7 +166,8 @@ int main(int argc, char *argv[]) {
                      &status);
         }
         // receber last chunk
-        MPI_Recv(&(resultado[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        if (nprocesses > 1)
+            MPI_Recv(&(resultado[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
         // fazer transposta para enviar para processos linhas à mesma
         transposta(transpose, resultado, rows, cols);
 
@@ -178,7 +182,8 @@ int main(int argc, char *argv[]) {
             MPI_Send(&(transpose[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
         }
         // Enviar dimensão dos dados para o último processo apos transposta
-        MPI_Send(&(transpose[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        if (nprocesses > 1)
+            MPI_Send(&(transpose[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
 
 
 
@@ -192,7 +197,7 @@ int main(int argc, char *argv[]) {
         int q = 0;
         int w;
 
-        #pragma omp parallel for schedule(static,1024)
+        #pragma omp parallel for private(q, w, t, s)
         for (int j = 0; j < partition; j++) // Linhas
         {
             //intialise variables
@@ -237,7 +242,8 @@ int main(int argc, char *argv[]) {
             MPI_Recv(&(output[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
         }
         // receber last chunk apos fase 2
-        MPI_Recv(&(output[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        if (nprocesses > 1)
+            MPI_Recv(&(output[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
 
         // transposta para voltar ao formato inicial
         transposta(transpose, output, rows, cols);
@@ -272,7 +278,7 @@ int main(int argc, char *argv[]) {
         MPI_Recv(&(processar[0][0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
         //Fazer fase 1
-        #pragma omp parallel for schedule(static,1024)
+        #pragma omp parallel for
         for (int i = 0; i < partition; i++) {
             //check for obstacle in the entire row
             //Left to right pass
@@ -319,7 +325,7 @@ int main(int argc, char *argv[]) {
         int t[initial_data[0]];
         int q = 0;
         int w;
-        #pragma omp parallel for schedule(static,1024)
+        #pragma omp parallel for private(q, w, t, s)
         for (int j = 0; j < partition; j++) // Linhas
         {
 
