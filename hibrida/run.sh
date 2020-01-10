@@ -3,7 +3,6 @@
 module load gnu/openmpi_eth/1.8.4
 module load gcc/4.9.0
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib
-export OMP_NUM_THREADS=${3}
 echo '>>>>> A COMPILAR'
 
 make
@@ -14,7 +13,4 @@ echo '>>>>> A CORRER SEQUENCIAL'
 
 echo '>>>>> A CORRER PARALELA'
 
-
-mpirun -np ${1} --map-by ${2} -mca btl self,sm,tcp bin/paralela < bin/teste${4}.pgm
-
-make clean
+mpirun -np ${1} --map-by ppr:1:core:PE=${2} --display-map -mca btl self,sm,tcp bin/paralela ${3} < bin/teste${4}.pgm
