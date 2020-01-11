@@ -2,14 +2,14 @@ CC=mpic++
 SOURCE_DIR=src
 BIN_DIR=bin
 LIB_DIR=lib
-OUTPUT=$(BIN_DIR)/executavel.o
+OUTPUT=$(BIN_DIR)/executavelSeq.o
 
 NETPBM_INC=-I./lib
 NETPBM_LIB=-L./lib -lnetpbm
 #PAPI_INC=-I/share/apps/papi/5.5.0/include
 #PAPI_LIB=-L/share/apps/papi/5.5.0/lib
 
-SOURCE= $(SOURCE_DIR)/mainMPI.cpp
+SOURCE= $(SOURCE_DIR)/main.cpp
 
 CFLAGS= -O3 -lm -g -flto-report
 

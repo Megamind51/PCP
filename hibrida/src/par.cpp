@@ -112,6 +112,7 @@ int main(int argc, char *argv[]) {
         pm_init(argv[0], 0);
         matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
         int initial_data[2] = {rows, cols};
+        start = MPI_Wtime();
         MPI_Bcast(initial_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
         output = pgm_allocarray(cols, rows);
         resultado = pgm_allocarray(cols, rows);
@@ -123,8 +124,6 @@ int main(int argc, char *argv[]) {
         int tamanho_ultimo_processo = rows - (partition * (nprocesses - 1));
         int i = 1;
 
-        start = MPI_Wtime();
-        start2 = MPI_Wtime();
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
             MPI_Send(&(matrix[(i) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
@@ -134,8 +133,6 @@ int main(int argc, char *argv[]) {
         if (nprocesses > 1)
             MPI_Send(&(matrix[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
 
-        end2 = MPI_Wtime();
-        tempo_total3 += (end2 - start2);
 
         //FAZER TRABALHO
         #pragma omp parallel for
@@ -167,7 +164,6 @@ int main(int argc, char *argv[]) {
         //FAZER TRABALHO
 
 
-        start2 = MPI_Wtime();
         //receber linhas  processadas
         for (i = 1; i < nprocesses - 1; i++) {
             MPI_Recv(&(resultado[(i) * partition][0]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD,
@@ -177,16 +173,11 @@ int main(int argc, char *argv[]) {
         if (nprocesses > 1)
             MPI_Recv(&(resultado[(i) * partition][0]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
 
-        end2 = MPI_Wtime();
-        tempo_total3 += (end2 - start2);
 
         // fazer transposta para enviar para processos linhas à mesma
-        start2 = MPI_Wtime();
         transposta(transpose, resultado, rows, cols);
 
-        end2 = MPI_Wtime();
 
-        tempo_total2 = (end2 - start2);
 
 
 
@@ -195,7 +186,6 @@ int main(int argc, char *argv[]) {
         tamanho_ultimo_processo = cols - (partition * (nprocesses - 1));
         i = 1;
 
-        start2 = MPI_Wtime();
         // Enviar número de linhas e colunas aos processos apos transposta
         for (; i < nprocesses - 1; i++) {
             MPI_Send(&(transpose[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
@@ -203,9 +193,6 @@ int main(int argc, char *argv[]) {
         // Enviar dimensão dos dados para o último processo apos transposta
         if (nprocesses > 1)
             MPI_Send(&(transpose[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
-
-        end2 = MPI_Wtime();
-        tempo_total3 += (end2 - start2);
 
 
 
@@ -257,7 +244,6 @@ int main(int argc, char *argv[]) {
 
         //FAZER TRABALHO
 
-        start2 = MPI_Wtime();
         //receber linhas  processadas apos fase 2
         for (i = 1; i < nprocesses - 1; i++) {
             MPI_Recv(&(output[(i) * partition][0]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
@@ -266,29 +252,21 @@ int main(int argc, char *argv[]) {
         if (nprocesses > 1)
             MPI_Recv(&(output[(i) * partition][0]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
 
-        end2 = MPI_Wtime();
-        tempo_total3 += (end2 - start2);
         // transposta para voltar ao formato inicial
-        start2 = MPI_Wtime();
         transposta(transpose, output, rows, cols);
-        end2 = MPI_Wtime();
-        end = MPI_Wtime();
-        tempo_total2 += (end2 - start2);
 
-        tempo_total += (end - start);
-        printf("Tempo transposta %f;  \n", tempo_total2);
-        printf("Tempo COM %f;  \n", tempo_total3);
-        printf("%f; %d \n", tempo_total, myrank);
+        end = MPI_Wtime();
+        tempo_total = (end - start);
+        printf("%f;\n",tempo_total );
 
         //Abrir o apontador para o ficheiro de output
-        if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {
-            printf("Erro ao abrir ficheiro");
-            exit(1);
-        }
+            if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {
+                printf("Erro ao abrir ficheiro");
+                exit(1);
+            }
 
-        pgm_writepgm(fptr, transpose, cols, rows, maxval, 1);
-        fclose(fptr);
-
+            pgm_writepgm(fptr, transpose, cols, rows, maxval, 1);
+            fclose(fptr);
     }
         // Processos trabalhadores
     else {
@@ -296,20 +274,10 @@ int main(int argc, char *argv[]) {
         // receber o tamanho de cada linha e numero de linhas que vai receber
         MPI_Bcast(initial_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
-
-
         int partition = initial_data[0] / (nprocesses );
         if ( myrank == nprocesses - 1 ){
             partition = initial_data[0] - (partition * (nprocesses - 1));
         }
-
-        int partition2 = initial_data[1] / (nprocesses);
-         if ( myrank == nprocesses - 1 ){
-             partition2 = initial_data[1] - (partition2 * (nprocesses - 1));
-         }
-
-        gray** processar2 = pgm_allocarray( initial_data[0], partition2 );
-        gray** resultado2 = pgm_allocarray( initial_data[0], partition2 );
 
         gray **processar = pgm_allocarray(initial_data[1], partition );
         gray **resultado = pgm_allocarray(initial_data[1], partition );
@@ -317,7 +285,6 @@ int main(int argc, char *argv[]) {
         MPI_Recv(&(processar[0][0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
 
-        start2 = MPI_Wtime();
 
         //Fazer fase 1
         #pragma omp parallel for
@@ -345,18 +312,20 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        end2 = MPI_Wtime();
-        tempo_total2 = (end2 - start2);
-
         //enviar linhas para processo sicronizador
         MPI_Send(&(resultado[0][0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0,
                  MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
 
 
+          partition = initial_data[1] / (nprocesses);
+          if ( myrank == nprocesses - 1 ){
+              partition = initial_data[1] - (partition * (nprocesses - 1));
+          }
 
+         processar = pgm_allocarray( initial_data[0], partition );
+         resultado = pgm_allocarray( initial_data[0], partition );
 
-
-        MPI_Recv(&(processar2[0][0]), initial_data[0] * partition2, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
+        MPI_Recv(&(processar[0][0]), initial_data[0] * partition, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
 
         //Lower envelope indices
@@ -365,9 +334,8 @@ int main(int argc, char *argv[]) {
         int t[initial_data[0]];
         int q = 0;
         int w;
-        start2 = MPI_Wtime();
         #pragma omp parallel for private(q, w, t, s)
-        for (int j = 0; j < partition2; j++) // Linhas
+        for (int j = 0; j < partition; j++) // Linhas
         {
 
             //intialise variables
@@ -378,14 +346,14 @@ int main(int argc, char *argv[]) {
             for (int u = 1; u < initial_data[0]; u++) { //Colunas
 
                 while (q >= 0 &&
-                       ((CDT_f(t[q], s[q], (int) processar2[j][s[q]])) > CDT_f(t[q], u, (int) processar2[j][u])))
+                       ((CDT_f(t[q], s[q], (int) processar[j][s[q]])) > CDT_f(t[q], u, (int) processar[j][u])))
                     q--;
                 if (q < 0) {
                     q = 0;
                     s[0] = u;
                 } else {
                     //Finds sub-regions
-                    w = 1 + CDT_sep(s[q], u, (int) processar2[j][s[q]], (int) processar2[j][u]);
+                    w = 1 + CDT_sep(s[q], u, (int) processar[j][s[q]], (int) processar[j][u]);
                     if (w < initial_data[0]) {
                         q++;
                         s[q] = u;
@@ -396,22 +364,15 @@ int main(int argc, char *argv[]) {
             }
             //bottom to top of image to find final DT using lower envelope
             for (int u = initial_data[0] - 1; u >= 0; u--) {
-                resultado2[j][u] = CDT_f(u, s[q], (int) processar2[j][s[q]]); // só aqui é que é alterado a matrix output
+                resultado[j][u] = CDT_f(u, s[q], (int) processar[j][s[q]]); // só aqui é que é alterado a matrix output
                 if (u == t[q])
                     q--;
             }
 
         }
         //enviar linhas para processo sicronizador
-
-
-        end2 = MPI_Wtime();
-        tempo_total2+= (end2 - start2);
-
-        MPI_Send(&(resultado2[0][0]), initial_data[0] * partition2, MPI_UNSIGNED, 0, 0,
+        MPI_Send(&(resultado[0][0]), initial_data[0] * partition, MPI_UNSIGNED, 0, 0,
                  MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
-
-        printf("Tempo paralelo %f; %d \n", tempo_total2, myrank);
 
     }
 

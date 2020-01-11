@@ -13,4 +13,4 @@ echo '>>>>> A CORRER SEQUENCIAL'
 
 echo '>>>>> A CORRER PARALELA'
 
-mpirun -np ${1} --map-by ppr:1:core:PE=${2} --display-map -mca btl self,sm,tcp bin/paralela ${3} < bin/teste${4}.pgm
+mpirun -n ${1} --map-by ppr:1:socket:PE=${2} --display-map -mca btl self,sm,tcp bin/paralela ${3} < bin/teste${4}.pgm

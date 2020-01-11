@@ -104,6 +104,8 @@ int main(int argc, char *argv[]) {
         pm_init(argv[0], 0);
         matrix = pgm_readpgm(stdin, &cols, &rows, &maxval);
         int aux[2] = {rows, cols};
+        start = MPI_Wtime();
+
         MPI_Bcast(aux, 2, MPI_INT, 0, MPI_COMM_WORLD);
         output = pgm_allocarray(cols, rows);
         resultado = pgm_allocarray(cols, rows);
@@ -115,7 +117,6 @@ int main(int argc, char *argv[]) {
         int tamanho_ultimo_processo = rows - (partition * (nprocesses - 2));
         int i = 1;
 
-        start = MPI_Wtime();
 
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
@@ -159,8 +160,8 @@ int main(int argc, char *argv[]) {
         // transposta para voltar ao formato inicial
         transposta(transpose, output, rows, cols);
         end = MPI_Wtime();
-        tempo_total += (end - start);
-        printf("%f; %d \n", tempo_total, myrank);
+        tempo_total = (end - start);
+        printf(";%f", tempo_total);
 
         //Abrir o apontador para o ficheiro de output
         if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {
@@ -170,7 +171,6 @@ int main(int argc, char *argv[]) {
 
         pgm_writepgm(fptr, transpose, cols, rows, maxval, 1);
         fclose(fptr);
-
     }
         // Processos trabalhadores
     else {
