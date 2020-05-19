@@ -19,7 +19,6 @@ short unsigned int * my_aloc_pgm(int rows, int cols){
 short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
 	char line[128];
 	int flag = 1, j = 0;
-	short unsigned int aux;
 	while (j < 4 ) {
 		fgets(line, 128, f);
 		j++;
@@ -105,9 +104,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 }
 
 int main(int argc, char const *argv[]) {
-    unsigned int rows, cols, row, col, min;
-	//Variáveis para medição temporal e apontador para os ficheiros de output
-    double start, end;
+    int rows, cols;
     FILE * fptr;
 
 	if ((fptr = fopen(argv[1],"r")) == NULL){
@@ -120,6 +117,8 @@ int main(int argc, char const *argv[]) {
 	short unsigned int * output;
 
 	matrix = my_read_pgm(fptr, &cols, &rows);
+	fclose(fptr);
+
 	output  = my_aloc_pgm(cols, rows);
 	
 	final = run_parallel(matrix, output, rows, cols);
