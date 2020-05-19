@@ -17,24 +17,23 @@ short unsigned int * my_aloc_pgm(int rows, int cols){
 }
 
 short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
-	size_t read, len;
-	char* line;
+	char line[128];
 	int flag = 1, j = 0;
 	short unsigned int aux;
-	while (j < 4 && (read = getline(&line, &len, f)) != -1) {
+	while (j < 4 ) {
+		fgets(line, 128, f);
 		j++;
         if (flag)
 			if (sscanf(line, "%d %d", rows, cols) == 2)
-				flag = 0;
-		free(line);		
+				flag = 0;	
     }
 	short unsigned int * matrix = my_aloc_pgm(*rows, *cols);
-	printf("%hu", matrix[0]);
+
 	for (int i = 0; i < *rows; i++)
 	{
 		for (int j = 0; j < *cols; j++)
 		{
-			len = fscanf(f, "%hd\n", &matrix[i * (*cols) + j]);
+			fscanf(f, "%hd\n", &matrix[i * (*cols) + j]);
 		}
 		
 	}
@@ -111,17 +110,22 @@ int main(int argc, char const *argv[]) {
     double start, end;
     FILE * fptr;
 
+	if ((fptr = fopen(argv[1],"r")) == NULL){
+		printf("Erro ao abrir ficheiro\n");
+		exit(1);
+	}
+
 	short unsigned int * final;
 	short unsigned int * matrix;
 	short unsigned int * output;
 
-	matrix = my_read_pgm(stdin, &cols, &rows);
+	matrix = my_read_pgm(fptr, &cols, &rows);
 	output  = my_aloc_pgm(cols, rows);
 	
 	final = run_parallel(matrix, output, rows, cols);
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
-			printf("Erro ao abrir ficheiro");
+			printf("Erro ao abrir ficheiro\n");
 			exit(1);
 		}
 
