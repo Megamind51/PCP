@@ -6,8 +6,6 @@ OUTPUT=$(BIN_DIR)/executavelSeq.o
 
 NETPBM_INC=-I./lib
 NETPBM_LIB=-L./lib -lnetpbm
-#PAPI_INC=-I/share/apps/papi/5.5.0/include
-#PAPI_LIB=-L/share/apps/papi/5.5.0/lib
 
 SOURCE= $(SOURCE_DIR)/main.cpp
 
@@ -20,7 +18,6 @@ all: $(OUTPUT)
 $(OUTPUT):  $(SOURCE)
 	    $(MKDIR) $(BIN_DIR)
 	    $(CC) $(INC) $(SOURCE) $(CFLAGS) $(NETPBM_INC) $(NETPBM_LIB) -o $(OUTPUT)
-			#$(PAPI_LIB) $(PAPI_INC)
 
 .PHONY: clean
 clean:
