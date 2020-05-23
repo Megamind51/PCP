@@ -40,7 +40,7 @@ void transposta(unsigned short int * dst, unsigned short int * src, int rowsI, i
         for (int j = 0; j < cols; j += block) {
             for (int a = 0; a < block; a++) {
                 for (int b = 0; b < block; b++) {
-                    dst[(j + b)*rows + i + a] = src[(i + a)*cols + j + b];
+                    dst[((j + b)*rowsI) + i + a] = src[((i + a)*colsI) + j + b];
                 }
             }
         }
@@ -50,24 +50,24 @@ void transposta(unsigned short int * dst, unsigned short int * src, int rowsI, i
     if (rows % block != 0 && cols % block != 0) {
         for (int i = rows; i < rowsI; i++) {
             for (int j = 0; j < colsI; j++) {
-                dst[j*colsI + i] = src[i*colsI + j];
+                dst[j*rowsI + i] = src[i*colsI + j];
             }
         }
         for (int i = 0; i < rowsI; i++) {
             for (int j = cols; j < colsI; j++) {
-                dst[j*colsI + i] = src[i*colsI + j];
+                dst[j*rowsI + i] = src[i*colsI + j];
             }
         }
     } else if (rows % block != 0) {
         for (int i = rows; i < rowsI; i++) {
             for (int j = 0; j < colsI; j++) {
-                dst[j*colsI + i] = src[i*colsI + j];
+                dst[j*rowsI + i] = src[i*colsI + j];
             }
         }
     } else if (cols % block != 0) {
         for (int i = 0; i < rowsI; i++) {
             for (int j = cols; j < colsI; j++) {
-                dst[j*colsI + i] = src[i*colsI + j];
+                dst[j*rowsI + i] = src[i*colsI + j];
             }
         }
     }
@@ -169,23 +169,28 @@ int main(int argc, char *argv[]) {
 
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
-            MPI_Send(&(matrix[(i - 1) * partition * cols]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+            MPI_Send(&(matrix[(i - 1) * partition]), cols * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
 
         }
         // Enviar dimensão dos dados para o último processo
-        MPI_Send(&(matrix[(i - 1) * partition * cols]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        MPI_Send(&(matrix[(i - 1) * partition]), cols * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
 
-
+        printf("Enviado\n");
         //receber linhas  processadas
         for (i = 1; i < nprocesses - 1; i++) {
-            MPI_Recv(&(resultado[(i - 1) * partition * cols]), cols * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD,
+            MPI_Recv(&(resultado[(i - 1) * partition]), cols * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD,
                      &status);
         }
         // receber last chunk
 
-        MPI_Recv(&(resultado[(i - 1) * partition * cols]), cols * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&(resultado[(i - 1) * partition]), cols * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
+
         // fazer transposta para enviar para processos linhas à mesma
+        printf("Recebido\n");
+
+
         transposta(transpose, resultado, rows, cols);
+
 
         // redefinir variaveis apos transposta
         partition = cols / (nprocesses - 1);
@@ -194,23 +199,24 @@ int main(int argc, char *argv[]) {
 
         // Enviar número de linhas e colunas aos processos apos transposta
         for (; i < nprocesses - 1; i++) {
-            MPI_Send(&(transpose[(i - 1) * partition * cols]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+            MPI_Send(&(transpose[(i - 1) * partition]), rows * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
         }
         // Enviar dimensão dos dados para o último processo apos transposta
-        MPI_Send(&(transpose[(i - 1) * partition * cols]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
+        MPI_Send(&(transpose[(i - 1) * partition]), rows * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
 
         //receber linhas  processadas apos fase 2
         for (i = 1; i < nprocesses - 1; i++) {
-            MPI_Recv(&(output[(i - 1) * partition * cols]), rows * partition, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+            MPI_Recv(&(output[(i - 1) * partition]), rows * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
         }
         // receber last chunk apos fase 2
-        MPI_Recv(&(output[(i - 1) * partition * cols]), rows * tamanho_ultimo_processo, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&(output[(i - 1) * partition]), rows * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
 
         // transposta para voltar ao formato inicial
-        transposta(transpose, output, rows, cols);
+        transposta(transpose, output, cols, rows);
         end = MPI_Wtime();
         tempo_total = (end - start);
         printf(";%f", tempo_total);
+
 
         //Abrir o apontador para o ficheiro de output
         if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {
@@ -235,35 +241,38 @@ int main(int argc, char *argv[]) {
         unsigned short int * processar = my_aloc_pgm(initial_data[1], partition );
         unsigned short int * resultado = my_aloc_pgm(initial_data[1], partition );
 
-        MPI_Recv(&(processar[0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
+        MPI_Recv(&(processar[0]), partition * initial_data[1], MPI_UNSIGNED_SHORT, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
+        printf("Recebido worker fase 1\n");
+
         //Fazer fase 1
         for (int i = 0; i < partition; i++) {
             //check for obstacle in the entire row
             //Left to right pass
 
-            if (resultado[i * partition])
-                resultado[i * partition] = 0;
+            if (resultado[i * initial_data[1]])
+                resultado[i * initial_data[1]] = 0;
             else
-                resultado[i * partition] = 255;
+                resultado[i * initial_data[1]] = 255;
 
             //check for obstacle in the entire row
             //Left to right pass
             for (int j = 1; j < initial_data[1]; j++) {
-                if (processar[i * partition + j])
-                    resultado[i * partition + j]= std::min(255, 1 + resultado[i * partition + j - 1]);
+                if (processar[i * initial_data[1] + j]){
+                    resultado[i * initial_data[1] + j]= std::min(255, 1 + resultado[i * initial_data[1] + j - 1]);
+                }
                 else
-                    resultado[i * partition + j] = 0;
+                    resultado[i * initial_data[1] + j] = 0;
             }
             //Right to left pass
             for (int j = initial_data[1] - 2; j >= 0; j--) {
-                if (resultado[i * partition + j + 1] < resultado[i * partition + j + 1])
-                    resultado[i * partition + j + 1] = std::min(255, 1 + resultado[i * partition + j + 1]);
+                if (resultado[i * initial_data[1] + j + 1] < resultado[i * initial_data[1] + j ] )
+                    resultado[i * initial_data[1] + j ] = std::min(255, 1 + resultado[i * initial_data[1] + j + 1]);
             }
         }
 
         //enviar linhas para processo sicronizador
-        MPI_Send(&(resultado[0]), partition * initial_data[1], MPI_UNSIGNED, 0, 0,
+        MPI_Send(&(resultado[0]), partition * initial_data[1], MPI_UNSIGNED_SHORT, 0, 0,
                  MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
 
          partition = initial_data[1] / (nprocesses - 1);
@@ -275,7 +284,7 @@ int main(int argc, char *argv[]) {
         resultado = my_aloc_pgm( initial_data[1], partition );
 
 
-        MPI_Recv(&(processar[0]), initial_data[0] * partition, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD,
+        MPI_Recv(&(processar[0]), initial_data[0] * partition, MPI_UNSIGNED_SHORT, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
 
         //Lower envelope indices
@@ -295,14 +304,14 @@ int main(int argc, char *argv[]) {
             for (int u = 1; u < initial_data[0]; u++) { //Colunas
 
                 while (q >= 0 &&
-                       ((CDT_f(t[q], s[q], (int) processar[j*partition + s[q]])) > CDT_f(t[q], u, (int) processar[j*partition + u])))
+                       ((CDT_f(t[q], s[q], (int) processar[j*initial_data[0] + s[q]])) > CDT_f(t[q], u, (int) processar[j*initial_data[0] + u])))
                     q--;
                 if (q < 0) {
                     q = 0;
                     s[0] = u;
                 } else {
                     //Finds sub-regions
-                    w = 1 + CDT_sep(s[q], u, (int) processar[j*partition + s[q]], (int) processar[j*partition + u]);
+                    w = 1 + CDT_sep(s[q], u, (int) processar[j*initial_data[0] + s[q]], (int) processar[j*initial_data[0] + u]);
                     if (w < initial_data[0]) {
                         q++;
                         s[q] = u;
@@ -313,7 +322,7 @@ int main(int argc, char *argv[]) {
             }
             //bottom to top of image to find final DT using lower envelope
             for (int u = initial_data[0] - 1; u >= 0; u--) {
-                resultado[j*partition + u] = CDT_f(u, s[q], (int) processar[j*partition + s[q]]); // só aqui é que é alterado a matrix output
+                resultado[j*initial_data[0] + u] = CDT_f(u, s[q], (int) processar[j*initial_data[0] + s[q]]); // só aqui é que é alterado a matrix output
                 if (u == t[q])
                     q--;
             }
@@ -321,7 +330,7 @@ int main(int argc, char *argv[]) {
         }
         //enviar linhas para processo sicronizador
 
-        MPI_Send(&(resultado[0]), initial_data[0] * partition, MPI_UNSIGNED, 0, 0,
+        MPI_Send(&(resultado[0]), initial_data[0] * partition, MPI_UNSIGNED_SHORT, 0, 0,
                  MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
 
     }
