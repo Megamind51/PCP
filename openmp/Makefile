@@ -6,7 +6,7 @@ dtrans.h: dtrans.d
 main.o: src/main.c dtrans.h 
 	g++ -c src/main.c dtrans.h 
 
-omp.o: main.o src/dtrans.d 
+omp.o: main.o dtrans.h
 	dtrace -G -s src/dtrans.d main.o -o omp.o 
 
 omp: omp.o 

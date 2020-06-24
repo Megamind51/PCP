@@ -106,6 +106,8 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 }
 
 int main(int argc, char const *argv[]) {
+	printf("Press Any Key\n");
+	getchar(); 
     int rows, cols;
     FILE * fptr;
 
