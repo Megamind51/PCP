@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "../dtrans.h"
 
 double clearcache [30000000];
 
@@ -73,6 +73,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 						                        min = matrix[(row + i) * cols + col + j];
 						                    }
 						     aux -= output[row * cols + col] = min + 1;
+							 PCP_VALUE_CHANGE();
 				}
             	else {
 								aux = matrix[row * cols + col];
@@ -86,6 +87,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 						                    if(output[(row + i) * cols + col + j] < min){
 						                        min = output[(row + i) * cols + col + j];
 						                    }
+
 						     aux -= matrix[row * cols + col] = min + 1;
 				}
 
