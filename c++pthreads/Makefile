@@ -6,7 +6,7 @@ OUTPUT=$(BIN_DIR)/executavel.o
 
 SOURCE= $(SOURCE_DIR)/*.cpp
 
-CFLAGS= -lpthread -O0 -lm -g -flto-report
+CFLAGS= -lpthread -O0 -lm -g -flto-report -std=c++11
 
 MKDIR= mkdir -p
 
