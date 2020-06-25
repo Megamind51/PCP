@@ -1,8 +1,8 @@
 #!/bin/bash
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/bin
+export PATH=$PATH:/usr/local/bin
 make clean
 make
 
-mpirun -n 8 bin/executavel.o bin/pic.pgm
+mpirun -n 8 -display-map --map-by core --mca btl vader,self bin/executavel.o bin/pic.pgm
 

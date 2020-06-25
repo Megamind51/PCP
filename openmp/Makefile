@@ -1,21 +1,18 @@
-CC=gcc
-SOURCE_DIR=./src
-BIN_DIR=./bin
-LIB_DIR=./lib
-OUTPUT=$(BIN_DIR)/executavel.o
+default: omp
 
-SOURCE= $(SOURCE_DIR)/*.c
+dtrans.h: dtrans.d 
+	dtrace -h -s src/dtrans.d 
 
-CFLAGS= -fopenmp -O0 -std=c99  -lm -g -flto-report
+main.o: src/main.c dtrans.h 
+	g++ -c src/main.c dtrans.h 
 
-MKDIR= mkdir -p
+omp.o: main.o dtrans.h
+	dtrace -G -s src/dtrans.d main.o -o omp.o 
 
-all: $(OUTPUT)
+omp: omp.o 
+	g++ -o omp omp.o main.o dtrans.h -lm -O0 -g -fopenmp
 
-$(OUTPUT):  $(SOURCE)
-	    $(MKDIR) $(BIN_DIR)
-	    $(CC) $(INC) $(SOURCE) $(CFLAGS) -o $(OUTPUT)
-
-.PHONY: clean
 clean:
-	rm -f $(OUTPUT)
+	rm -f *.o
+	rm -f dtrans.h
+	rm -f omp

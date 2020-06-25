@@ -156,9 +156,9 @@ int main(int argc, char *argv[]) {
         start = MPI_Wtime();
 
         MPI_Bcast(aux, 2, MPI_INT, 0, MPI_COMM_WORLD);
-        output = my_aloc_pgm(cols, rows);
+        output = my_aloc_pgm(rows, cols);
         resultado = my_aloc_pgm(cols, rows);
-        transpose = my_aloc_pgm(cols, rows);
+        transpose = my_aloc_pgm(rows, cols);
 
         // Determinar número de linhas a enviar a cada processo
         // Arrays com as dimensões dos dados a ser enviados aos processos
@@ -175,19 +175,15 @@ int main(int argc, char *argv[]) {
         // Enviar dimensão dos dados para o último processo
         MPI_Send(&(matrix[(i - 1) * partition]), cols * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
 
-        printf("Enviado\n");
         //receber linhas  processadas
         for (i = 1; i < nprocesses - 1; i++) {
             MPI_Recv(&(resultado[(i - 1) * partition]), cols * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD,
                      &status);
         }
         // receber last chunk
-
         MPI_Recv(&(resultado[(i - 1) * partition]), cols * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
 
         // fazer transposta para enviar para processos linhas à mesma
-        printf("Recebido\n");
-
 
         transposta(transpose, resultado, rows, cols);
 
@@ -204,6 +200,7 @@ int main(int argc, char *argv[]) {
         // Enviar dimensão dos dados para o último processo apos transposta
         MPI_Send(&(transpose[(i - 1) * partition]), rows * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD);
 
+
         //receber linhas  processadas apos fase 2
         for (i = 1; i < nprocesses - 1; i++) {
             MPI_Recv(&(output[(i - 1) * partition]), rows * partition, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
@@ -212,19 +209,20 @@ int main(int argc, char *argv[]) {
         MPI_Recv(&(output[(i - 1) * partition]), rows * tamanho_ultimo_processo, MPI_UNSIGNED_SHORT, i, 0, MPI_COMM_WORLD, &status);
 
         // transposta para voltar ao formato inicial
-        transposta(transpose, output, cols, rows);
+        transposta(matrix, output, cols, rows);
         end = MPI_Wtime();
         tempo_total = (end - start);
         printf(";%f", tempo_total);
 
 
+
         //Abrir o apontador para o ficheiro de output
-        if ((fptr = fopen("paralela.pgm", "w+")) == NULL) {
+        if ((fptr = fopen("output.pgm", "w+")) == NULL) {
             printf("Erro ao abrir ficheiro");
             exit(1);
         }
 
-        my_write_pgm(fptr, transpose, cols, rows);
+        my_write_pgm(fptr, matrix, cols, rows);
         fclose(fptr);
     }
         // Processos trabalhadores
@@ -243,7 +241,6 @@ int main(int argc, char *argv[]) {
 
         MPI_Recv(&(processar[0]), partition * initial_data[1], MPI_UNSIGNED_SHORT, 0, 0, MPI_COMM_WORLD,
                  &status); // receber linhas
-        printf("Recebido worker fase 1\n");
 
         //Fazer fase 1
         for (int i = 0; i < partition; i++) {
@@ -273,7 +270,7 @@ int main(int argc, char *argv[]) {
 
         //enviar linhas para processo sicronizador
         MPI_Send(&(resultado[0]), partition * initial_data[1], MPI_UNSIGNED_SHORT, 0, 0,
-                 MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
+                 MPI_COMM_WORLD); 
 
          partition = initial_data[1] / (nprocesses - 1);
          if ( myrank == nprocesses - 1 ){
@@ -285,7 +282,7 @@ int main(int argc, char *argv[]) {
 
 
         MPI_Recv(&(processar[0]), initial_data[0] * partition, MPI_UNSIGNED_SHORT, 0, 0, MPI_COMM_WORLD,
-                 &status); // receber linhas
+                 &status); 
 
         //Lower envelope indices
         int s[initial_data[0]];
@@ -331,7 +328,7 @@ int main(int argc, char *argv[]) {
         //enviar linhas para processo sicronizador
 
         MPI_Send(&(resultado[0]), initial_data[0] * partition, MPI_UNSIGNED_SHORT, 0, 0,
-                 MPI_COMM_WORLD); // receber o tamanho de cada linha e numero de linhas que vai receber
+                 MPI_COMM_WORLD);
 
     }
 
