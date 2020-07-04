@@ -153,12 +153,17 @@ int main(int argc, char const *argv[]) {
 
 	output  = my_aloc_pgm(cols, rows);
 
-	time_t t = time(NULL);
-	
-	final = run_parallel(matrix, output, rows, cols);
+	long start, end;
+    struct timeval timecheck;
 
-	t = time(NULL) - t;
-	printf("Exec time: %.3f\n", (double) t);
+    gettimeofday(&timecheck, NULL);
+    start = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
+	
+	final = run_parallel(matrix, output, rows, cols, thread_handles);
+
+	gettimeofday(&timecheck, NULL);
+    end = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
+	printf("Exec time: %.3f\n", (((double) (end - start))/1000);
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
 			printf("Erro ao abrir ficheiro\n");

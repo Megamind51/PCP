@@ -123,18 +123,23 @@ int main(int argc, char const *argv[]) {
 	fclose(fptr);
 
 	output  = my_aloc_pgm(cols, rows);
+	
+	long start, end;
+    struct timeval timecheck;
 
-	time_t t = time(NULL);
+    gettimeofday(&timecheck, NULL);
+    start = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
+	
+	final = run_parallel(matrix, output, rows, cols, thread_handles);
 
-	final = run_parallel(matrix, output, rows, cols);
+	gettimeofday(&timecheck, NULL);
+    end = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
+	printf("Exec time: %.3f\n", (((double) (end - start))/1000);
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
 			printf("Erro ao abrir ficheiro\n");
 			exit(1);
 		}
-
-	t = time(NULL) - t;
-	printf("Exec time: %.3f\n", (double) t);
 
 	my_write_pgm(fptr, final, cols, rows);
 	fclose(fptr);
