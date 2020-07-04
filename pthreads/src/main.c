@@ -157,8 +157,7 @@ int main(int argc, char const *argv[]) {
 	
 	final = run_parallel(matrix, output, rows, cols, thread_handles);
 
-	t = time(NULL) - t;
-	printf("Exec time: %.3f\n", (double) t);
+	printf("Exec time: %.3f\n", (double) (time(NULL) - t));
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
 			printf("Erro ao abrir ficheiro\n");
