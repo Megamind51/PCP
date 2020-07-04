@@ -124,7 +124,7 @@ int main(int argc, char const *argv[]) {
 
 	output  = my_aloc_pgm(cols, rows);
 
-	double t = time();
+	double t = time(NULL);
 
 	final = run_parallel(matrix, output, rows, cols);
 
@@ -133,7 +133,7 @@ int main(int argc, char const *argv[]) {
 			exit(1);
 		}
 
-	t = time() - t;
+	t = time(NULL) - t;
 	printf("Exec time: %.3f\n", t);
 
 	my_write_pgm(fptr, final, cols, rows);

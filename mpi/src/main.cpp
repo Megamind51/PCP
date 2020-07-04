@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
         int tamanho_ultimo_processo = rows - (partition * (nprocesses - 2));
         int i = 1;
 
-        double t  = time();
+        double t  = time(NULL);
 
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
         // transposta para voltar ao formato inicial
         transposta(matrix, output, cols, rows);
         
-        t = time() - t;
+        t = time(NULL) - t;
         printf("Exec time: %.3f\n", t);
 
 
