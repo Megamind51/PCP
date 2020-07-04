@@ -123,14 +123,14 @@ int main(int argc, char const *argv[]) {
 	fclose(fptr);
 
 	output  = my_aloc_pgm(cols, rows);
-	
+
 	long start, end;
     struct timeval timecheck;
 
     gettimeofday(&timecheck, NULL);
     start = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
 	
-	final = run_parallel(matrix, output, rows, cols, thread_handles);
+	final = run_parallel(matrix, output, rows, cols);
 
 	gettimeofday(&timecheck, NULL);
     end = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
