@@ -2,7 +2,7 @@ CC=mpic++
 SOURCE_DIR=src
 BIN_DIR=bin
 LIB_DIR=lib
-OUTPUT=$(BIN_DIR)/executavel.o
+OUTPUT=$(BIN_DIR)/omp
 
 
 SOURCE= $(SOURCE_DIR)/main.cpp

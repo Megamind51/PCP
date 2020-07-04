@@ -1,6 +1,6 @@
 default: omp
 
-dtrans.h: dtrans.d 
+dtrans.h: src/dtrans.d 
 	dtrace -h -s src/dtrans.d 
 
 main.o: src/main.c dtrans.h 

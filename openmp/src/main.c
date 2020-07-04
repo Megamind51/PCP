@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../dtrans.h"
+#include <time.h>
 
 double clearcache [30000000];
 
@@ -106,8 +107,6 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 }
 
 int main(int argc, char const *argv[]) {
-	printf("Press Any Key\n");
-	getchar(); 
     int rows, cols;
     FILE * fptr;
 
@@ -124,13 +123,18 @@ int main(int argc, char const *argv[]) {
 	fclose(fptr);
 
 	output  = my_aloc_pgm(cols, rows);
-	
+
+	double t = time();
+
 	final = run_parallel(matrix, output, rows, cols);
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
 			printf("Erro ao abrir ficheiro\n");
 			exit(1);
 		}
+
+	t = time() - t;
+	printf("Exec time: %.3f\n", t);
 
 	my_write_pgm(fptr, final, cols, rows);
 	fclose(fptr);

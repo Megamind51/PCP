@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h> 
+#include <time.h>
 
 
 //Chessboard DT F function
@@ -160,12 +161,15 @@ int main(int argc, char *argv[]) {
         resultado = my_aloc_pgm(cols, rows);
         transpose = my_aloc_pgm(rows, cols);
 
+
+
         // Determinar número de linhas a enviar a cada processo
         // Arrays com as dimensões dos dados a ser enviados aos processos
         int partition = rows / (nprocesses - 1);
         int tamanho_ultimo_processo = rows - (partition * (nprocesses - 2));
         int i = 1;
 
+        double t  = time();
 
         // Enviar número de linhas e colunas aos processos
         for (; i < nprocesses - 1; i++) {
@@ -210,9 +214,9 @@ int main(int argc, char *argv[]) {
 
         // transposta para voltar ao formato inicial
         transposta(matrix, output, cols, rows);
-        end = MPI_Wtime();
-        tempo_total = (end - start);
-        printf(";%f", tempo_total);
+        
+        t = time() - t;
+        printf("Exec time: %.3f\n", t);
 
 
 

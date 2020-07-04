@@ -152,8 +152,13 @@ int main(int argc, char const *argv[]) {
 	fclose(fptr);
 
 	output  = my_aloc_pgm(cols, rows);
+
+	double t = time();
 	
 	final = run_parallel(matrix, output, rows, cols, thread_handles);
+
+	t = time() - t;
+	printf("Exec time: %.3f\n", t);
 
 	if ((fptr = fopen("output.pgm","w")) == NULL){
 			printf("Erro ao abrir ficheiro\n");
