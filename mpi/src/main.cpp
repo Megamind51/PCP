@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
 
         gettimeofday(&timecheck, NULL);
         end = (long) timecheck.tv_sec * 1000 + (long)timecheck.tv_usec / 1000;
-        printf("Exec time: %.3f\n", (((double) (end - start))/1000);
+        printf("Exec time: %.3f\n", ((double) (end - start))/1000);
 
 
 
