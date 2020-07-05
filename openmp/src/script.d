@@ -1,6 +1,6 @@
 #pragma D option quiet
 
-pcp*:::*entry
+pcp*:::*enter
 {
         @aux[probefunc] = vtimestamp;
 }
