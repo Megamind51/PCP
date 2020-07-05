@@ -1,11 +1,11 @@
 #pragma D option quiet
 
-pcp*:::*enter
+pcp*:::*-enter
 {
         @aux[probefunc] = vtimestamp;
 }
 
-pcp*:::*eturn
+pcp*:::*-return
 {
         @times[probefunc] += vtimestamp - @aux[probefunc];
 }
