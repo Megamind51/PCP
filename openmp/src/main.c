@@ -14,16 +14,16 @@ void clearCache (void) {
 }
 
 short unsigned int * my_aloc_pgm(int rows, int cols){
-	PCP_ALLOC_PGM_ENTRY();
+	PCP_ALOC_PGM_ENTER();
 
 	short unsigned int * r = (short unsigned int *) malloc(rows*cols*sizeof(short unsigned int));
 
-	PCP_ALLOC_PGM_RETURN();
+	PCP_ALOC_PGM_RETURN();
 	return r;
 }
 
 short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
-	PCP_READ_PGM_ENTRY();
+	PCP_READ_PGM_ENTER();
 	char line[128];
 	int flag = 1, j = 0;
 	while (j < 4 ) {
@@ -49,7 +49,7 @@ short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
 }
 
 void my_write_pgm(FILE * f, short unsigned int * matrix, int rows, int cols){
-	PCP_WRITE_PGM_ENTRY();
+	PCP_WRITE_PGM_ENTER();
 	fprintf(f, "P2\n# :)\n%d %d\n255\n", rows, cols);
 	for (int i = 0; i < rows; i++)
 	{
@@ -65,7 +65,7 @@ void my_write_pgm(FILE * f, short unsigned int * matrix, int rows, int cols){
 
 int min, i, j;
 short unsigned int * run_parallel(short unsigned int * matrix, short unsigned int * output, int rows, int cols){
-	PCP_RUN_PARALLEL_ENTRY();
+	PCP_RUN_PARALLEL_ENTER();
 	int flag = 1, aux, iterator = 1;
 	while (flag){
     	flag = 0;
@@ -117,7 +117,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 }
 
 int main(int argc, char const *argv[]) {
-	PCP_MAIN_ENTRY();
+	PCP_MAIN_ENTER();
     int rows, cols;
     FILE * fptr;
 
