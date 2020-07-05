@@ -13,11 +13,17 @@ void clearCache (void) {
 		clearcache[i] = i;
 }
 
-short unsigned int * my_aloc_pgm(int rows, int cols){	
-	return  (short unsigned int *) malloc(rows*cols*sizeof(short unsigned int));
+short unsigned int * my_aloc_pgm(int rows, int cols){
+	PCP_ALLOC_PGM_ENTRY();
+
+	short unsigned int * r = (short unsigned int *) malloc(rows*cols*sizeof(short unsigned int));
+
+	PCP_ALLOC_PGM_RETURN();
+	return r;
 }
 
 short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
+	PCP_READ_PGM_ENTRY();
 	char line[128];
 	int flag = 1, j = 0;
 	while (j < 4 ) {
@@ -38,10 +44,12 @@ short unsigned int * my_read_pgm(FILE * f, int * rows, int * cols){
 		
 	}
 	
+	PCP_READ_PGM_RETURN();
 	return matrix;
 }
 
 void my_write_pgm(FILE * f, short unsigned int * matrix, int rows, int cols){
+	PCP_WRITE_PGM_ENTRY();
 	fprintf(f, "P2\n# :)\n%d %d\n255\n", rows, cols);
 	for (int i = 0; i < rows; i++)
 	{
@@ -51,11 +59,13 @@ void my_write_pgm(FILE * f, short unsigned int * matrix, int rows, int cols){
 		}
 		
 	}
-	
+
+	PCP_WRITE_PGM_RETURN();	
 }
 
 int min, i, j;
 short unsigned int * run_parallel(short unsigned int * matrix, short unsigned int * output, int rows, int cols){
+	PCP_RUN_PARALLEL_ENTRY();
 	int flag = 1, aux, iterator = 1;
 	while (flag){
     	flag = 0;
@@ -74,7 +84,6 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 						                        min = matrix[(row + i) * cols + col + j];
 						                    }
 						     aux -= output[row * cols + col] = min + 1;
-							 PCP_VALUE_CHANGE();
 				}
             	else {
 								aux = matrix[row * cols + col];
@@ -100,6 +109,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 	  	iterator = !iterator;
  	}
 
+ 	PCP_RUN_PARALLEL_RETURN();
  	if(iterator)
     	return matrix;
   	else
@@ -107,6 +117,7 @@ short unsigned int * run_parallel(short unsigned int * matrix, short unsigned in
 }
 
 int main(int argc, char const *argv[]) {
+	PCP_MAIN_ENTRY();
     int rows, cols;
     FILE * fptr;
 
@@ -143,4 +154,6 @@ int main(int argc, char const *argv[]) {
 
 	my_write_pgm(fptr, final, cols, rows);
 	fclose(fptr);
+
+	PCP_MAIN_RETURN();
 }

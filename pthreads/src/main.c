@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "timer.h"
+#include <time.h>
 
 short unsigned int * matrix;
 short unsigned int * output;

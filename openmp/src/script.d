@@ -1,6 +1,16 @@
 #pragma D option quiet
- 
-pcp*:::
+
+pcp*:::*entry
 {
-        @["value change"] = count();
+        @aux[probefunc] = vtimestamp;
+}
+
+pcp*:::*eturn
+{
+        @times[probefunc] += vtimestamp - @aux[probefunc];
+}
+
+
+END{
+	printa(@times);
 }
